@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>images/mmml.png</file>
+        <file>images/noimage.png</file>
+        <file>images/epi.ico</file>
+        <file>images/sp.ico</file>
+        <file>images/td.ico</file>
+    </qresource>
+</RCC>
