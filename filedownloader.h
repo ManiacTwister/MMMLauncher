@@ -16,6 +16,7 @@ public:
     virtual ~FileDownloader();
 
     QByteArray downloadedData() const;
+    QNetworkReply *reply;
 
 signals:
         void downloaded();

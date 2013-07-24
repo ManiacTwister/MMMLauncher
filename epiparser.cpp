@@ -26,12 +26,42 @@ void EpiParser::parse()
         episodes.reserve(epis.count());
 
         foreach (const QJsonValue &epi, epis) {
+            QJsonObject epiObject = epi.toObject();
+
+            QString title = "Unbekannt";
+            QString author = "Unbekannt";
+            QString description = "- Keine Beschreibung verfügbar -";
+            QString screenshot = "noscreen";
+            int type = Category::Episode;
+            QString archive = "noarchive";
+
+
+            if(!epiObject["Title"].isNull()) {
+                title = epiObject["Title"].toString();
+            }
+            if(!epiObject["Author"].isNull()) {
+                author = epiObject["Author"].toString();
+            }
+            if(!epiObject["Description"].isNull()) {
+                description = epiObject["Description"].toString();
+            }
+            if(!epiObject["Type"].isNull()) {
+                type = Category::smallToCategory(epiObject["Type"].toString());
+            }
+            if(!epiObject["Screenshot"].isNull()) {
+                screenshot = epiObject["Screenshot"].toString();
+            }
+            if(!epiObject["Archive"].isNull()) {
+                archive = epiObject["Archive"].toString();
+            }
+
             episodes.push_back(Episode(
-                epi.toObject()["Title"].toString(),
-                epi.toObject()["Description"].toString(),
-                epi.toObject()["Author"].toString(),
-                Category::smallToCategory(epi.toObject()["Type"].toString()),
-                epi.toObject()["Screenshot"].toString()
+                title,
+                description,
+                author,
+                type,
+                screenshot,
+                archive
             ));
        }
     } else {

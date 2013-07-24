@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     mmmlutils.cpp \
     epiparser.cpp \
     episode.cpp \
-    category.cpp
+    category.cpp \
+    epidownloader.cpp
 
 HEADERS  += mainwindow.h \
     filedownloader.h \
@@ -30,7 +31,8 @@ HEADERS  += mainwindow.h \
     mmmlutils.h \
     epiparser.h \
     episode.h \
-    category.h
+    category.h \
+    epidownloader.h
 
 FORMS    += mainwindow.ui
 

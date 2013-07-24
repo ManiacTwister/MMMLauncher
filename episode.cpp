@@ -7,13 +7,14 @@ Episode::Episode()
 {
 }
 
-Episode::Episode(QString title, QString description, QString author, int category, QString image)
+Episode::Episode(QString title, QString description, QString author, int category, QString image, QString downloadurl)
 {
     setTitle(title);
     setDescription(description);
     setAuthor(author);
     setCategory(category);
     setImage(image);
+    setDownloadUrl(downloadurl);
 }
 
 void Episode::setTitle(QString newtitle)
@@ -38,7 +39,15 @@ void Episode::setCategory(int newcategory)
 
 void Episode::setImage(QString newimage)
 {
-    image = newimage;
+    if(newimage.trimmed().isEmpty())
+        image = "noimage.png";
+    else
+        image = newimage.trimmed();
+}
+
+void Episode::setDownloadUrl(QString newdownloadurl)
+{
+    downloadurl = newdownloadurl;
 }
 
 QString Episode::getTitle() { return title; }
@@ -61,3 +70,4 @@ QIcon Episode::getCategoryIcon()
     return QIcon(":/images/images/epi.ico");
 }
 QString Episode::getImage() { return image; }
+QString Episode::getDownloadUrl() { return downloadurl; }

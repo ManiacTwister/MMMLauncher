@@ -31,6 +31,10 @@
   <property name="windowTitle">
    <string>MMMLauncher</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="mmml.qrc">
+    <normaloff>:/images/images/epi.ico</normaloff>:/images/images/epi.ico</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <property name="minimumSize">
     <size>
@@ -44,11 +48,11 @@
      <height>649</height>
     </size>
    </property>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="labelUpdate">
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>590</y>
+      <y>585</y>
       <width>231</width>
       <height>16</height>
      </rect>
@@ -70,7 +74,7 @@
      <item>
       <widget class="QPushButton" name="buttonDownload">
        <property name="text">
-        <string>Herunterladen</string>
+        <string>Download</string>
        </property>
       </widget>
      </item>
@@ -127,7 +131,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>610</y>
+      <y>612</y>
       <width>260</width>
       <height>23</height>
      </rect>
@@ -145,14 +149,14 @@
      </size>
     </property>
     <property name="value">
-     <number>24</number>
+     <number>0</number>
     </property>
    </widget>
    <widget class="QGraphicsView" name="epiScreenshoot">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>280</y>
+      <y>285</y>
       <width>320</width>
       <height>200</height>
      </rect>
@@ -174,6 +178,9 @@
       <width>320</width>
       <height>200</height>
      </size>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
     </property>
     <property name="verticalScrollBarPolicy">
      <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -214,7 +221,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>310</y>
+      <y>313</y>
       <width>131</width>
       <height>16</height>
      </rect>
@@ -223,35 +230,10 @@
      <string>Zusätzliche Dateien:</string>
     </property>
    </widget>
-   <widget class="QLabel" name="epiDescription">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>490</y>
-      <width>316</width>
-      <height>139</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>316</width>
-      <height>139</height>
-     </size>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>316</width>
-      <height>139</height>
-     </size>
-    </property>
-    <property name="text">
-     <string>Description</string>
-    </property>
-    <property name="wordWrap">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QTableWidget" name="tableWidget">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -279,9 +261,83 @@
      <bool>false</bool>
     </attribute>
    </widget>
+   <widget class="QPlainTextEdit" name="epiDescription">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>496</y>
+      <width>320</width>
+      <height>139</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>320</width>
+      <height>139</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>316</width>
+      <height>139</height>
+     </size>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+    <property name="centerOnScroll">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QTreeWidget" name="treeWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>590</width>
+      <height>267</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="editTriggers">
+     <set>QAbstractItemView::NoEditTriggers</set>
+    </property>
+    <property name="indentation">
+     <number>5</number>
+    </property>
+    <property name="rootIsDecorated">
+     <bool>false</bool>
+    </property>
+    <property name="itemsExpandable">
+     <bool>false</bool>
+    </property>
+    <property name="expandsOnDoubleClick">
+     <bool>false</bool>
+    </property>
+    <attribute name="headerStretchLastSection">
+     <bool>false</bool>
+    </attribute>
+    <column>
+     <property name="text">
+      <string>Titel</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Autor</string>
+     </property>
+    </column>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="mmml.qrc"/>
+ </resources>
  <connections/>
 </ui>
