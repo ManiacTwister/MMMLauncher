@@ -3,15 +3,18 @@
 
 #include <QObject>
 #include <QByteArray>
-#include "episode.h"
+#include <QMap>
+#include "Models/episode.h"
 
 class EpiParser : public QObject
 {
     Q_OBJECT
 public:
+    EpiParser();
     explicit EpiParser(QByteArray data, QObject *parent = 0);
-    std::vector<Episode> episodes;
+    QMap <int, Episode*> episodes;
     void parse();
+    bool parsed = false;
 signals:
 
 private:

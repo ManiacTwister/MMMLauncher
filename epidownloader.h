@@ -19,10 +19,12 @@ public:
 signals:
         void downloaded();
         void downloadProgress(qint64 bytesReceived, qint64 bytesToal, double speed, QString unit);
+        void readReady(QByteArray bytes);
 
 private slots:
     void fin(QNetworkReply *);
     void dlProgress(qint64 bytesReceived, qint64 bytesToal);
+    void readingReadyBytes();
 
 private:
     QByteArray m_DownloadedData;

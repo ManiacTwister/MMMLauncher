@@ -1,15 +1,26 @@
 #include "mainwindow.h"
 #include <QApplication>
+#include <QLibraryInfo>
+#include <QLocale>
+#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    a.setApplicationVersion(APPLICATION_VERSION);
-    a.setApplicationName("MMMLauncher");
-    a.setOrganizationName("ManiacTwister");
-    a.setOrganizationDomain("http://maniactwister.de/");
+    QApplication app(argc, argv);
+    app.setApplicationVersion(APPLICATION_VERSION);
+    app.setApplicationName("MMMLauncher");
+    app.setOrganizationName("ManiacTwister");
+    app.setOrganizationDomain("http://maniactwister.de/");
+
+    QTranslator qtTranslator;
+    qtTranslator.load("qt_" + QLocale::system().name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+    app.installTranslator(&qtTranslator);
+    QTranslator myappTranslator;
+    myappTranslator.load("myapp_" + QLocale::system().name());
+    app.installTranslator(&myappTranslator);
+
     MainWindow w;
     w.show();
     
-    return a.exec();
+    return app.exec();
 }

@@ -27,6 +27,7 @@ void EpiDownloader::fin(QNetworkReply * pReply)
         filename = pReply->header(QNetworkRequest::LocationHeader).toString();
         mCurrentReply = this->get(req);
         connect(mCurrentReply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(dlProgress(qint64,qint64)));
+        connect(mCurrentReply, SIGNAL(readyRead()), this, SLOT(readingReadyBytes()));
         return;
     }
 
@@ -35,6 +36,13 @@ void EpiDownloader::fin(QNetworkReply * pReply)
     //emit a signal
     pReply->deleteLater();
     emit downloaded();
+}
+
+void EpiDownloader::readingReadyBytes()
+{
+    //qDebug() << mCurrentReply->read(mCurrentReply->bytesAvailable());
+    QByteArray bytes = mCurrentReply->read(mCurrentReply->bytesAvailable());
+    emit readReady(bytes);
 }
 
 void EpiDownloader::dlProgress(qint64 bytesReceived, qint64 bytesToal)

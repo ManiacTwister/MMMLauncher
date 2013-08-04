@@ -1,9 +1,26 @@
 <RCC>
     <qresource prefix="/images">
-        <file>images/mmml.png</file>
-        <file>images/noimage.png</file>
-        <file>images/epi.ico</file>
-        <file>images/sp.ico</file>
-        <file>images/td.ico</file>
+        <file>images/about.png</file>
+        <file>images/chuck.png</file>
+        <file>images/redchuck.png</file>
+        <file>images/bluechuck.png</file>
+        <file>images/undefined.png</file>
+        <file>images/lilachuck.png</file>
+        <file>images/greenchuck.png</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file>images/01.png</file>
+        <file>images/02.png</file>
+        <file>images/03.png</file>
+        <file>images/04.png</file>
+        <file>images/05.png</file>
+        <file>images/06.png</file>
+        <file>images/07.png</file>
+        <file>images/08.png</file>
+        <file>images/09.png</file>
+        <file>images/10.png</file>
+        <file>images/11.png</file>
+        <file>images/12.png</file>
+        <file>images/plus.png</file>
     </qresource>
 </RCC>

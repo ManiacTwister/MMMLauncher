@@ -20,21 +20,32 @@ SOURCES += main.cpp\
     filedownloader.cpp \
     aboutdialog.cpp \
     mmmlutils.cpp \
-    epiparser.cpp \
-    episode.cpp \
-    category.cpp \
-    epidownloader.cpp
+    epidownloader.cpp \
+    qextract.cpp \
+    newtabdialog.cpp \
+    Models/author.cpp \
+    Models/episode.cpp \
+    Models/category.cpp \
+    Parsers/categoryparser.cpp \
+    Parsers/epiparser.cpp \
+    Parsers/authorparser.cpp
 
 HEADERS  += mainwindow.h \
     filedownloader.h \
     aboutdialog.h \
     mmmlutils.h \
-    epiparser.h \
-    episode.h \
-    category.h \
-    epidownloader.h
+    epidownloader.h \
+    qextract.h \
+    newtabdialog.h \
+    Models/author.h \
+    Models/episode.h \
+    Models/category.h \
+    Parsers/categoryparser.h \
+    Parsers/epiparser.h \
+    Parsers/authorparser.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    newtabdialog.ui
 
 RESOURCES += \
     mmml.qrc

@@ -3,8 +3,10 @@
 #include "filedownloader.h"
 #include "epidownloader.h"
 #include "aboutdialog.h"
-#include "episode.h"
-#include "category.h"
+#include "Models/episode.h"
+#include "Models/category.h"
+#include "Models/author.h"
+#include "qextract.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -16,86 +18,135 @@
 #include <QModelIndex>
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
+#include <QSettings>
+#include <QToolButton>
+#include <QFont>
+#include "newtabdialog.h"
+#include <QIODevice>
 
+
+/**
+  *  Create mainwindow
+  *
+  *  @param QWidget *parent
+  *  @return void
+  *
+**/
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_aboutDialog(0),
     ui(new Ui::MainWindow)
 {
+    settings = new QSettings(QDir::currentPath() + "/my_config_file.ini", QSettings::IniFormat);
+    settings->setValue("apiUrl", QUrl("http://launcher.maniactwister.de/api2/"));
+    settings->setValue("updateUrl", QUrl("http://launcher.maniactwister.de/lastupdate"));
+    settings->setValue("epiDir", QDir::currentPath()+"/"+"Episoden");
+    settings->setValue("epiJson", QDir::currentPath()+"/"+".episoden.json");
+    settings->setValue("categoryJson", QDir::currentPath()+"/"+".categories.json");
+    settings->setValue("authorJson", QDir::currentPath()+"/"+".authors.json");
+    settings->sync();
+
     //QStringList list;
-    QUrl updateUrl("http://launcher.maniactwister.de/update/");
-    downloader = new FileDownloader(updateUrl, this);
-    connect(downloader, SIGNAL(downloaded()), SLOT(updateData()));
+    downloader = new FileDownloader(QUrl(settings->value("updateUrl").toString()), this);
+    connect(downloader, SIGNAL(downloaded()), SLOT(checkIfUpdateNeeded()));
 
     ui->setupUi(this);
 
     connect(ui->buttonAbout, SIGNAL(clicked()), SLOT(aboutMMMLauncher()));
     connect(ui->buttonDownload, SIGNAL(clicked()), SLOT(downloadEpisode()));
+    connect(ui->buttonStart, SIGNAL(clicked()), SLOT(startEpisode()));
+    connect(ui->buttonSetup, SIGNAL(clicked()), SLOT(setupEpisode()));
+    connect(ui->buttonUpdate, SIGNAL(clicked()), SLOT(restartApp())); // Dirty but easy.. restart app and update jsons
     connect(ui->treeWidget, SIGNAL(itemSelectionChanged()), SLOT(episodeSelected()));
-
-    /* TABLE VERSION BACKUP */
-    //QItemSelectionModel *sm = ui->tableWidget->selectionModel();
-    //connect(sm, SIGNAL(currentRowChanged(QModelIndex,QModelIndex)), SLOT(episodeSelected(QModelIndex)));
-
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(onTabChanged(int)));
+    connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
 
     noEpiSelected();
+    epiDir = new QDir(settings->value("epiDir").toString());
 
     // epiDescription background
     ui->epiDescription->viewport()->setAutoFillBackground(false);
+    QToolButton *newTabButton = new QToolButton(this);
+    ui->tabWidget->setCornerWidget(newTabButton);
+    newTabButton->setCursor(Qt::ArrowCursor);
+    newTabButton->setAutoRaise(true);
+    newTabButton->setIcon(QIcon(":/icons/images/plus.png"));
+    connect(newTabButton, SIGNAL(clicked()), this, SLOT(newTabButton()));
+    newTabButton->setToolTip(tr("Add page"));
 
-    /* TABLE VERSION BACKUP */
-    // Setup table layout
-    /*ui->tableWidget->setRowCount(0);
-    ui->tableWidget->setColumnCount(2);
-
-    //add header to QTableWidgetItem
-    list<<"Titel" << "Autor";
-    ui->tableWidget->setHorizontalHeaderLabels(list);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive);
-    ui->tableWidget->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-    ui->tableWidget->verticalHeader()->setDefaultSectionSize(20);
-
-    ui->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);*/
-
-
-    catEpisodes     =    new QTreeWidgetItem(ui->treeWidget);
-    catSpecials     =    new QTreeWidgetItem(ui->treeWidget);
-    catTrailerDemo  =    new QTreeWidgetItem(ui->treeWidget);
-    catTrash        =    new QTreeWidgetItem(ui->treeWidget);
-    catEpisodes->setText(0, "Episoden");
-    catSpecials->setText(0, "Specials");
-    catTrailerDemo->setText(0, "Trailer & Demos");
-    catTrash->setText(0, "Trash");
-    catEpisodes->setFlags(Qt::ItemIsEnabled);
-    catSpecials->setFlags(Qt::ItemIsEnabled);
-    catTrailerDemo->setFlags(Qt::ItemIsEnabled);
-    catTrash->setFlags(Qt::ItemIsEnabled);
-
-    ui->treeWidget->expandAll();
-
-    ui->treeWidget->header()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::Interactive);
+    ui->tabWidget->removeTab(1);
+    setupTreewidget(ui->treeWidget);
+    setCurrentTreeWidget();
+    ui->tabWidget->tabBar()->tabButton(0, QTabBar::RightSide)->resize(0, 0);
+    ui->tabWidget->setTabText(0, tr("Übersicht"));
 }
 
-bool MainWindow::init()
+/**
+  *  Set properties for treewidgets
+  *
+  *  @param TreeWidget* widget
+  *  @return void
+  *
+**/
+void MainWindow::setupTreewidget(QTreeWidget* widget)
 {
-    return true;
+    widget->expandAll();
+
+    widget->header()->setSectionResizeMode(QHeaderView::Stretch);
+    widget->header()->setSectionResizeMode(1, QHeaderView::Interactive);
 }
 
+/**
+  *  Signal - fired when tab changed
+  *
+  *  @param int index
+  *  @return void
+  *
+**/
+void MainWindow::onTabChanged(int index)
+{
+    if(currentTreeWidget->selectedItems().count() > 0) {
+        qDebug() << "test";
+        currentTreeWidget->selectedItems()[0]->setSelected(false);
+        noEpiSelected();
+    }
+
+    setCurrentTreeWidget();
+}
+
+/**
+  *  Set the current treewidget (for the visible tab)
+  *
+  *  @return void
+  *
+**/
+void MainWindow::setCurrentTreeWidget()
+{
+    if(ui->tabWidget->currentIndex() == 0) {
+        currentTreeWidget = ui->treeWidget;
+    } else {
+        currentTreeWidget = (QTreeWidget*) ui->tabWidget->currentWidget();
+    }
+
+}
+
+/**
+  *  Slot - fired when a item in treewidget selected
+  *
+  *  @return void
+  *
+**/
 void MainWindow::episodeSelected()
 {
-    if(ui->treeWidget->selectedItems().count() < 1) {
+    if(currentTreeWidget->selectedItems().count() < 1) {
         noEpiSelected();
         return;
     }
 
-
-    QTreeWidgetItem* item = ui->treeWidget->selectedItems()[0];
-    qDebug() << "Test";
-    selectedEpisode = epis->episodes[item->data(0,Qt::UserRole).toInt()];
-    QString image = "/home/maniactwister/Projects/Qt/MMMLauncher/images/Screenshots/"+ selectedEpisode.getImage();
+    QTreeWidgetItem* item = currentTreeWidget->selectedItems()[0];
+    selectedEpisode = epis->episodes.find(item->data(0,Qt::UserRole).toInt()).value();
+    QString image = "/home/maniactwister/Projects/Qt/MMMLauncher/images/Screenshots/"+ selectedEpisode->getImage();
     QFile file(image);
 
     if(file.exists()) {
@@ -104,47 +155,132 @@ void MainWindow::episodeSelected()
         ui->epiScreenshoot->setScene(scene);
     } else {
         setNoimage();
+        item->data(0,Qt::UserRole).toInt();
     }
     file.close();
-    ui->epiDescription->setPlainText(selectedEpisode.getDescription());
+    ui->epiDescription->setPlainText(selectedEpisode->getDescription());
+    QDir *selectedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
 
-    // TODO: Check if epi is downloaded and display the correct buttons
-    ui->buttonDownload->setDisabled(false);
+    ui->directoryContent->clear();
+
+    if(!selectedEpiDir->exists()) {
+        ui->buttonDownload->setDisabled(false);
+        ui->buttonStart->setDisabled(true);
+        ui->buttonSetup->setDisabled(true);
+    } else {
+        ui->buttonDownload->setDisabled(true);
+        ui->buttonStart->setDisabled(false);
+        ui->buttonSetup->setDisabled(false);
+
+        QFileInfoList filesList = selectedEpiDir->entryInfoList();
+
+
+        foreach(QFileInfo fileInfo, filesList)
+        {
+            QString iconName = getFileIconName(fileInfo);
+            if(iconName == "false") {
+                continue;
+            }
+
+            QTreeWidgetItem* item = new QTreeWidgetItem(ui->directoryContent);
+            item->setText(0,fileInfo.fileName());
+
+            item->setText(1,QString::number(fileInfo.size()));
+            item->setIcon(0,QIcon(iconName));
+            item->setText(2,fileInfo.filePath());
+        }
+        if(selectedEpisode->getGameExe().isNull()) {
+            selectedEpisode->setGameExe(searchGameExe(selectedEpiDir));
+        }
+    }
 }
 
-/* TABLE VERSION BACKUP */
-/*void MainWindow::episodeSelected(QModelIndex row)
-{
-    selectedEpisode = epis->episodes[row.row()];
-    QString image = "/home/maniactwister/Projects/Qt/MMMLauncher/images/Screenshots/"+ selectedEpisode.getImage();
-    QFile file(image);
+/**
+  *  Helper - get the right icon for filetype
+  *
+  *  @param QFileInfo fileInfo
+  *  @return QString
+  *
+**/
+QString MainWindow::getFileIconName(QFileInfo fileInfo) {
+    QString suffix = fileInfo.suffix().toLower();
 
-    if(file.exists()) {
-        scene = new QGraphicsScene();
-        scene->addPixmap(QPixmap(image));
-        ui->epiScreenshoot->setScene(scene);
-    } else {
-        setNoimage();
+    if(suffix == "txt") {
+        return ":/icons/images/01.png";
     }
-    file.close();
-    ui->epiDescription->setPlainText(selectedEpisode.getDescription());
-}*/
+    if(suffix == "jpg" || suffix == "png" || suffix == "bmp" ) {
+        return ":/icons/images/02.png";
+    }
+    if(suffix == "mp3") {
+        return ":/icons/images/03.png";
+    }
+    if(suffix == "avi") {
+        return ":/icons/images/04.png";
+    }
+    if(suffix == "doc") {
+        return ":/icons/images/05.png";
+    }
+    if(suffix == "pdf") {
+        return ":/icons/images/06.png";
+    }
+    if(suffix == "zip") {
+        return ":/icons/images/07.png";
+    }
+    if(suffix == "tra") {
+        if(fileInfo.fileName().toLower() == "english.tra") {
+            return ":/icons/images/08.png";
+        }
+        if(fileInfo.fileName().toLower() == "french.tra") {
+            return ":/icons/images/09.png";
+        }
+        if(fileInfo.fileName().toLower() == "spanish.tra") {
+            return ":/icons/images/10.png";
+        }
+    }
+    if(/*Info.filfileeName().toLower() == "agssave"*/suffix.toInt()) {
+        return ":/icons/images/11.png";
+    }
+    if(suffix == "agr") {
+        return ":/icons/images/12.png";
+    }
 
+    return "false";
+}
+
+/**
+  *  Set default image if no image is available
+  *
+  *  @return void
+  *
+**/
 void MainWindow::setNoimage() {
     scene = new QGraphicsScene();
-    scene->addPixmap(QPixmap(":/images/images/noimage.png"));
+    scene->addPixmap(QPixmap(":/images/images/undefined.png"));
     ui->epiScreenshoot->setScene(scene);
 }
 
+/**
+  *  Reset widgets when no episode is selected
+  *
+  *  @return void
+  *
+**/
 void MainWindow::noEpiSelected() {
     setNoimage();
     ui->epiDescription->setPlainText("");
     ui->buttonDownload->setDisabled(true);
     ui->buttonSetup->setDisabled(true);
     ui->buttonStart->setDisabled(true);
+    ui->directoryContent->clear();
     return;
 }
 
+/**
+  *  Set correct widget states when a download is running
+  *
+  *  @return void
+  *
+**/
 void MainWindow::setControlsDownloading()
 {
     ui->buttonDownload->setDisabled(true);
@@ -154,10 +290,18 @@ void MainWindow::setControlsDownloading()
     ui->buttonUpdate->setDisabled(true);
 
     ui->progressBar->setDisabled(false);
-    ui->labelUpdate->setText("Downloading ...");
-    ui->treeWidget->setDisabled(true);
+    ui->labelUpdate->setText(tr("Downloading ..."));
+    ui->tabWidget->setDisabled(true);
+    currentTreeWidget->setDisabled(true);
+
 }
 
+/**
+  *  Set correct widget states when all downloads are finished
+  *
+  *  @return void
+  *
+**/
 void MainWindow::setControlsDownloadFinished()
 {
     episodeSelected();
@@ -166,107 +310,716 @@ void MainWindow::setControlsDownloadFinished()
 
     ui->progressBar->setDisabled(true);
     ui->progressBar->setValue(0);
-    ui->labelUpdate->setText("Für ein Update auf \"Update\" klicken!");
-    ui->treeWidget->setDisabled(false);
+    ui->progressBar->setMaximum(100);
+    ui->progressBar->setMinimum(0);
+    ui->labelUpdate->setText(tr("Für ein Update auf \"Update\" klicken!"));
+    ui->tabWidget->setDisabled(false);
+    currentTreeWidget->setDisabled(false);
 }
 
-void MainWindow::updateData()
+/**
+  *  Check if the json files require a update
+  *
+  *  @return void
+  *
+**/
+void MainWindow::checkIfUpdateNeeded()
 {
-    epis = new EpiParser(downloader->downloadedData());
-    epis->parse();
-    int i=0;
-    for (auto &episode : epis->episodes) {
-        QTreeWidgetItem *item;
-        /*int row = ui->tableWidget->model()->rowCount();
-        ui->tableWidget->model()->insertRow(row);
-        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(episode.getCategoryIcon(), episode.getTitle()));
-        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(episode.getAuthor()));*/
-        if(episode.getCategory() == Category::Episode) {
-            item = new QTreeWidgetItem(catEpisodes);
-        } else if(episode.getCategory() == Category::Special) {
-            item = new QTreeWidgetItem(catSpecials);
-        } else if(episode.getCategory() == Category::TrailerDemo) {
-            item = new QTreeWidgetItem(catTrailerDemo);
-        } else if(episode.getCategory() == Category::Trash) {
-            item = new QTreeWidgetItem(catTrash);
+    QJsonParseError parseError;
+    QJsonParseError existingParseError;
+    QDateTime existingLastupdate;
+    QByteArray data;
+    bool updateNeeded = false;
+    QJsonDocument json = QJsonDocument::fromJson(downloader->downloadedData(), &parseError);
+
+
+    QFile file;
+    file.setFileName(settings->value("epiJson").toString());
+    if(file.exists()) {
+        file.open(QIODevice::ReadOnly);
+        data = file.readAll();
+        QJsonDocument existingJson = QJsonDocument::fromJson(data, &existingParseError);
+
+        if(parseError.error == QJsonParseError::NoError)
+        {
+            QJsonObject ob = existingJson.object();
+            QJsonObject meta = ob["meta"].toObject();
+            existingLastupdate = QDateTime::fromString(meta["lastupdate"].toString(), "yyyy-MM-dd hh:mm:ss");
+        } else {
+            qDebug() << "Updating because existing file is corrupt.";
+            updateNeeded = true;
+        }
+    } else {
+        qDebug() << "Updating because file does not exist.";
+        updateNeeded = true;
+    }
+
+    if(parseError.error == QJsonParseError::NoError)
+    {
+        QJsonObject ob = json.object();
+        QJsonObject meta = ob["meta"].toObject();
+        QDateTime lastupdate = QDateTime::fromString(meta["lastupdate"].toString(), "yyyy-MM-dd hh:mm:ss");
+
+        if(meta["lastlauncherversion"].toDouble() > QApplication::applicationVersion().toDouble()) {
+            QLocale c(QLocale::C);
+            QMessageBox::information(0, tr("Update verfügbar!"),
+                                     tr("Eine neue MMMLauncher Version ist verfügbar!\nIhre Version: %1  Aktuelle Version: %2")
+                                        .arg(
+                                             QString(QApplication::applicationVersion()),
+                                             c.toString(meta["lastlauncherversion"].toDouble(), 'f', 1)
+                                         )
+                                    );
         }
 
-        item->setIcon(0, episode.getCategoryIcon());
-        item->setText(0, episode.getTitle());
-        item->setText(1, episode.getAuthor());
-        item->setData(0,Qt::UserRole, i); // unique ID HERE;
-        qDebug() << episode.getTitle();
-        i++;
+        if(!updateNeeded) {
+            if(existingLastupdate < lastupdate) {
+                qDebug() << "Updating because existing file is too old.";
+                initUpdate();
+            } else {
+                QByteArray data2;
+                qDebug() << "Using existing file";
+                data2 = loadCacheFile(settings->value("categoryJson").toString());
+                if(!data2.isEmpty()) {
+                    updateCategories(data2);
+                } else {
+                    updatingAny = true;
+                    downloadCategories();
+                }
+                data2 = loadCacheFile(settings->value("authorJson").toString());
+                if(!data2.isEmpty()) {
+                    updateAuthors(data2);
+                } else {
+                    updatingAny = true;
+                    downloadAuthors();
+                }
+
+                if(!updatingAny) {
+                    updateGames(data);
+                }
+
+            }
+        }
+    }
+    if(updateNeeded) {
+        initUpdate();
+    }
+    file.close();
+
+}
+
+/**
+  *  Download all json files
+  *
+  *  @return void
+  *
+**/
+void MainWindow::initUpdate()
+{
+    downloadCategories();
+    downloadAuthors();
+    downloadGames();
+    // TODO Call updateGames(data);
+}
+
+/**
+  *  Download the category json file
+  *
+  *  @return void
+  *
+**/
+void MainWindow::downloadCategories() {
+    categoriesUpdate = true;
+    qDebug() << "downloading categories";
+    categoryDownloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/getCategoryTree.json"), this);
+    connect(categoryDownloader, SIGNAL(downloaded()), SLOT(updateCategories()));
+}
+
+/**
+  *  Download the author json file
+  *
+  *  @return void
+  *
+**/
+void MainWindow::downloadAuthors() {
+    authorsUpdate = true;
+    qDebug() << "downloading authors";
+    authorDownloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/getAuthors.json"), this);
+    connect(authorDownloader, SIGNAL(downloaded()), SLOT(updateAuthors()));
+}
+
+/**
+  *  Download the episode json file
+  *
+  *  @return void
+  *
+**/
+void MainWindow::downloadGames() {
+    episUpdate = true;
+    qDebug() << "downloading games";
+    downloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/getGames.json"), this);
+    connect(downloader, SIGNAL(downloaded()), SLOT(updateGames()));
+}
+
+/**
+  *  Cache and update categories
+  *
+  *  @return void
+  *
+**/
+void MainWindow::updateCategories() {
+    // Cache and parse categories
+    cacheFile(settings->value("categoryJson").toString(), categoryDownloader->downloadedData());
+    updateCategories(categoryDownloader->downloadedData());
+    // Update authors
+
+}
+
+/**
+  *  Update categories
+  *
+  *  @param QByteArray data
+  *  @return void
+  *
+**/
+void MainWindow::updateCategories(QByteArray data) {
+    categories = new CategoryParser(data);
+    categories->parse();
+
+    foreach (Category* category, categories->categories) {
+        QTreeWidgetItem* cat;
+
+        if(category->getParentUid() != -1) {
+            if(!treeCategories.contains(category->getParentUid()))
+                continue;
+            cat = new QTreeWidgetItem(treeCategories.find(category->getParentUid()).value());
+        } else {
+            cat = new QTreeWidgetItem(ui->treeWidget);
+            QFont font = cat->font(0);
+            font.setBold(true);
+            cat->setFont(0, font);
+        }
+
+        cat->setText(0, category->getTitle());
+        cat->setFlags(Qt::ItemIsEnabled);
+        treeCategories.insert(category->getUid(), cat);
+    }
+
+    ui->treeWidget->expandAll();
+
+    if((authors->parsed || !authorsUpdate) && !episUpdate) {
+        updateGames(loadCacheFile(settings->value("epiJson").toString()));
     }
 }
 
+/**
+  *  Cache and update authors
+  *
+  *  @return void
+  *
+**/
+void MainWindow::updateAuthors() {
+    // Cache and parse categories
+    cacheFile(settings->value("authorJson").toString(), authorDownloader->downloadedData());
+    updateAuthors(authorDownloader->downloadedData());
+}
+
+/**
+  *  Update authors
+  *
+  *  @param QByteArray data
+  *  @return void
+  *
+**/
+void MainWindow::updateAuthors(QByteArray data) {
+    authors = new AuthorParser(data);
+    authors->parse();
+
+    if((categories->parsed || !categoriesUpdate) && !episUpdate) {
+        updateGames(loadCacheFile(settings->value("epiJson").toString()));
+    }
+}
+
+/**
+  *  Cache and update episoded if categories and authors are already updated
+  *
+  *  @return void
+  *
+**/
+void MainWindow::updateGames() {
+    // Cache and parse games
+    cacheFile(settings->value("epiJson").toString(), downloader->downloadedData());
+    episUpdate = false;
+    if((!authorsUpdate && !categoriesUpdate) || (categories->parsed && authors->parsed)) {
+            updateGames(loadCacheFile(settings->value("epiJson").toString()));
+    }
+}
+
+/**
+  *  Update episodes
+  *
+  *  @param QByteArray data
+  *  @return void
+  *
+**/
+void MainWindow::updateGames(QByteArray data)
+{
+    epis = new EpiParser(data);
+    epis->parse();
+
+    foreach (Episode* episode, epis->episodes) {
+        addGameWidgetItem(episode);
+    }
+}
+
+/**
+  *  Add a game entry to the main treewidget
+  *
+  *  @param Episode* episode
+  *  @return void
+  *
+**/
+void MainWindow::addGameWidgetItem(Episode* episode)
+{
+    if(!treeCategories.contains(episode->getCategoryUid()))
+        return;
+    QTreeWidgetItem *item = new QTreeWidgetItem(treeCategories.find(episode->getCategoryUid()).value());
+    addGameWidgetItem(episode, item);
+}
+
+/**
+  *  Add a game entry to the given treewidget
+  *
+  *  @param Episode* episode
+  *  @param QTreeWidget* widget
+  *  @return void
+  *
+**/
+void MainWindow::addGameWidgetItem(Episode* episode, QTreeWidget* widget)
+{
+    QTreeWidgetItem *item = new QTreeWidgetItem(widget);
+    addGameWidgetItem(episode, item);
+}
+
+/**
+  *  Add a game entry to the given treewidgetitem
+  *
+  *  @param Episode* episode
+  *  @param QTreeWidgetItem* item
+  *  @return void
+  *
+**/
+void MainWindow::addGameWidgetItem(Episode* episode, QTreeWidgetItem* item)
+{
+    QString author;
+    Category* category = categories->categories.find(episode->getCategoryUid()).value();
+
+    if(!authors->authors.contains(episode->getAuthorUid())) {
+        author = tr("Unknown");
+    } else {
+        author = authors->authors.find(episode->getAuthorUid()).value()->getName();
+    }
+
+    item->setIcon(0, category->getIcon());
+    item->setText(0, episode->getTitle());
+    item->setText(1, author);
+    item->setData(0,Qt::UserRole, episode->getUid()); // unique ID;
+}
+
+/**
+  *  Cache a file
+  *
+  *  @param QString filename
+  *  @param QByteArray data
+  *  @return void
+  *
+**/
+void MainWindow::cacheFile(QString filename, QByteArray data)
+{
+    QFile file;
+    file.setFileName(filename);
+    file.remove();
+    file.open(QIODevice::WriteOnly);
+    file.write(data);
+    file.close();
+}
+
+/**
+  *  Load a cached file
+  *
+  *  @param QString filename
+  *  @return QByteArray
+  *
+**/
+QByteArray MainWindow::loadCacheFile(QString filename)
+{
+    QFile file;
+    file.setFileName(filename);
+    if(file.exists()) {
+        file.open(QIODevice::ReadOnly);
+        return file.readAll();
+    }
+    return QByteArray();
+}
+
+/**
+  *  Slot - Download the selected episode
+  *
+  *  @return void
+  *
+**/
 void MainWindow::downloadEpisode()
 {
-    /*QUrl url(selectedEpisode.getDownloadUrl());
+    downloadEpisode(selectedEpisode);
+}
 
-    QFileInfo fileInfo(url.path());
-    QString strhost=url.encodedHost();
-    QString filename=fileInfo.fileName();
-    file.setFileName(QDir::currentPath()+ "/" +);
-    http.setHost(url.host(),url.port(80));
-    http.get(url.path(),&file);
-
-    if(!file.open(QIODevice::WriteOnly))
-    {
-    QMessageBox::warning(NULL,"warning","file is not opened",QMessageBox::Ok);
-    }
-    file.write(http.readAll());
-    http.close();
-    return true;
-
-
-    const QNetworkRequest& request = QNetworkRequestdlurl;
-    reply = http->get(request);
-    connect(reply, SIGNAL(readyRead()), this, SLOT( readingReadyBytes()));
-    downloadFile = new QFile(QDir::currentPath()+ "/" + reply->rawHeader("Content-Disposition"));*/
-
-    /*QUrl url(selectedEpisode.getDownloadUrl());
-    const QNetworkRequest& request = QNetworkRequest(url);
-    downloadReply = downloadHttp->get(request);
-    downloadHttp->g
-    connect(downloadReply, SIGNAL(readyRead()), this, SLOT(readingReadyBytes()));
-    connect(downloadReply, SIGNAL(finished()), this, SLOT(finishedDownload()));
-    downloadFile = new QFile(QDir::currentPath()+ "/" + downloadReply->rawHeader("Content-Disposition"));*/
+/**
+  *  Download the given episode
+  *
+  *  @param Episode* episode
+  *  @return void
+  *
+**/
+void MainWindow::downloadEpisode(Episode* episode)
+{
     qDebug() << QString("Downloading");
     setControlsDownloading();
-    epidownloader = new EpiDownloader(selectedEpisode.getDownloadUrl(), this);
+
+    epidownloader = new EpiDownloader(episode->getDownloadUrl(), this);
+
     connect(epidownloader, SIGNAL(downloaded()), SLOT(finishedDownload()));
+    connect(epidownloader, SIGNAL(readReady(QByteArray)), SLOT(readReady(QByteArray)));
     connect(epidownloader, SIGNAL(downloadProgress(qint64, qint64, double, QString)), SLOT(downloadProgress(qint64, qint64/*, double, QString*/)));
 
-
+    downloadFile = new QFile(QDir::currentPath() + "/" + "temp");
+    downloadFile->open(QIODevice::WriteOnly);
 }
 
-void MainWindow::readingReadyBytes()
-{
-    //downloadFile->write(downloadReply->read(downloadReply->bytesAvailable()));
-}
-
+/**
+  *  Slot - Fired every there and then from the downloader - Set the downloadprogress to progressbar
+  *
+  *  @param qint64 bytesReceived
+  *  @param qint64 bytesTotal
+  *  @return void
+  *
+**/
 void MainWindow::downloadProgress(qint64 bytesReceived, qint64 bytesTotal/*, double speed, QString unit*/)
 {
     double progress = ((double) bytesReceived / (double) bytesTotal) * 100;
     ui->progressBar->setValue(progress);
-    //ui->progressBar->setMessage(QString::fromLatin1("%1 %2").arg(speed, 3, 'f', 1).arg(unit));
 }
 
+/**
+  *  Slot - Fired when bytes from downloader are ready - Write ready bytes to file
+  *
+  *  @param QByteArray bytes
+  *  @return void
+  *
+**/
+void MainWindow::readReady(QByteArray bytes)
+{
+    downloadFile->write(bytes);
+}
+
+/**
+  *  Slot - Fired when a download is finished
+  *
+  *  @return void
+  *
+**/
 void MainWindow::finishedDownload()
 {
-    QFileInfo fileInf(epidownloader->filename); //maybe url.toString() might also be good
-    QString fileName = fileInf.fileName();
+    downloadFileInfo = new QFileInfo(epidownloader->filename); //maybe url.toString() might also be good
+    downloadFileName = QDir::currentPath() + "/" + downloadFileInfo->fileName();
 
-    QFile file(fileName);
-    file.open(QIODevice::WriteOnly);
-    QDataStream out(&file);
-    out << epidownloader->downloadedData();
+    downloadFile->rename(downloadFileName);
+    qDebug() << QString("Downloaded " + downloadFileInfo->fileName());
 
-    setControlsDownloadFinished();
-    qDebug() << QString("Downloaded" + fileName);
+    if (!epiDir->exists()) {
+        epiDir->mkpath(".");
+    }
+
+    epiDir->mkpath(selectedEpisode->getTitle());
+
+    int atype;
+
+    if(downloadFileInfo->completeSuffix() == "zip") {
+        atype = ArchiveType::ZipArchive;
+    } else if(downloadFileInfo->completeSuffix() == "rar") {
+        atype = ArchiveType::RarArchive;
+    }
+
+    QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+
+    QExtract *extract = new QExtract(downloadedEpiDir->absolutePath(), downloadFileName, atype);
+    extract->start();
+    connect(extract, SIGNAL(endExtractSignal()), SLOT(extractDone()));
+    //downloadFile->remove();
+    //downloadFile->close();
+    ui->progressBar->setMaximum(0);
+    ui->progressBar->setMinimum(0);
 }
 
+/**
+  *  Slot - Fired when extracting finished
+  *
+  *  @return void
+  *
+**/
+void MainWindow::extractDone()
+{
+    qDebug() << "Extract done";
+    QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+    cleanUpDirectory(downloadedEpiDir);
+    setControlsDownloadFinished();
+}
+
+
+/**
+  *  Clean up directory -> remove unneeded directorys
+  *
+  *  @param QDir *dir
+  *  @return void
+  *
+**/
+void MainWindow::cleanUpDirectory(QDir *dir) {
+
+    if(isUnneededDirectory(dir)) {
+        QString firstDir = getFirstDirectory(dir);
+        if(firstDir != "false") {
+            moveUp(firstDir, dir);
+            cleanUpDirectory(dir);
+        }
+    }
+}
+
+/**
+  *  Check if a directory is unneeded
+  *
+  *  @param QDir *dir
+  *  @return bool
+  *
+**/
+bool MainWindow::isUnneededDirectory(QDir *dir) {
+    QFileInfoList filesList = dir->entryInfoList();
+    int dirCount = 0;
+    int exeCount = 0;
+    foreach(QFileInfo fileInfo, filesList)
+    {
+        if(fileInfo.isDir()) {
+            dirCount++;
+        } else if(fileInfo.suffix() == "exe") {
+            exeCount++;
+        }
+    }
+    return dirCount > 0 && exeCount < 1;
+}
+
+/**
+  *  Get the first directory in a directory
+  *
+  *  @param QDir *dir
+  *  @return QString
+  *
+**/
+QString MainWindow::getFirstDirectory(QDir *dir) {
+    QFileInfoList filesList = dir->entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    foreach(QFileInfo fileInfo, filesList)
+    {
+        if(fileInfo.isDir()) {
+            return fileInfo.absoluteFilePath();
+        }
+    }
+    return "false";
+}
+
+/**
+  *  Move contents of directory one path up and remove the dir afterwards
+  *
+  *  @param QDir dir
+  *  @param QDir *destDir
+  *  @return void
+  *
+**/
+void MainWindow::moveUp(QDir dir, QDir *destDir) {
+
+    QFileInfoList filesList = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    foreach(QFileInfo fileInfo, filesList)
+    {
+        QFile().rename(fileInfo.absoluteFilePath(), destDir->absoluteFilePath(fileInfo.fileName()));
+    }
+
+    dir.rmdir(dir.absolutePath());
+}
+
+/**
+  *  Search the game exe in the given directory
+  *
+  *  @param QDir *dir
+  *  @return QString
+  *
+**/
+QString MainWindow::searchGameExe(QDir *dir) {
+    QFileInfoList filesList = dir->entryInfoList();
+    foreach(QFileInfo fileInfo, filesList)
+    {
+        if(fileInfo.suffix() == "exe" && fileInfo.fileName().toLower() != "winsetup") {
+            return fileInfo.absoluteFilePath();
+        }
+    }
+    return "false";
+}
+
+/**
+  *  Start the selected episode
+  *
+  *  @return void
+  *
+**/
+void MainWindow::startEpisode() {
+    QStringList parameters;
+    QProcess *process = new QProcess();
+    process->setWorkingDirectory(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+    #ifdef Q_OS_LINUX
+        parameters << "-windowed";
+        process->start("ags", parameters);
+    #elif defined(Q_OS_WINDOWS)
+        process->start(selectedEpisode->getGameExe(), parameters);
+    #endif
+}
+
+/**
+  *  Start the setup for the selected episode
+  *
+  *  @return void
+  *
+**/
+void MainWindow::setupEpisode() {
+    #ifdef Q_OS_LINUX
+     QMessageBox::information(0, "Information", "Diese Funktion steht unter Linux derzeit nicht zur verfügung.");
+    #elif defined(Q_OS_WINDOWS)
+     qDebug() << "Setup: "+ selectedEpisode->getGameExe();
+    #endif
+}
+
+
+
+/**
+ *
+ * Tabs
+ *
+ */
+
+/**
+  * Slot - fired when the new-tab-button is clicked - show the new tab dialog
+  *
+  *  @return void
+  *
+**/
+void MainWindow::newTabButton()
+{
+    m_newTabDialog = new NewTabDialog(authors, categories);
+    connect(m_newTabDialog, SIGNAL(accepted()), this, SLOT(openNewTab()));
+    m_newTabDialog->show();
+}
+
+/**
+  * Slot - fired when the new-tab-dialog is closed successfully - add a new tab and a treewidget in it
+  *
+  *  @return void
+  *
+**/
+void MainWindow::openNewTab()
+{
+    QStringList headerLabels;
+    headerLabels<< tr("Title") << tr("Author");
+
+    QTreeWidget* tabContent = new QTreeWidget();
+    tabContent->setHeaderLabels(headerLabels);
+    tabContent->header()->setStretchLastSection(false);
+    tabContent->setRootIsDecorated(false);
+    tabContent->setItemsExpandable(true);
+    tabContent->setIndentation(15);
+    tabContent->setExpandsOnDoubleClick(false);
+    tabContent->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tabContent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    setupTreewidget(tabContent);
+
+    QTreeWidgetItem* cat;
+    cat = new QTreeWidgetItem(tabContent);
+    QFont font = cat->font(0);
+    font.setBold(true);
+    cat->setFont(0, font);
+    cat->setFlags(Qt::ItemIsEnabled);
+
+
+    int newtab = ui->tabWidget->addTab(tabContent, "");
+
+    connect(tabContent, SIGNAL(itemSelectionChanged()), SLOT(episodeSelected()));
+
+    bool catdone = false;
+    foreach (Episode* episode, epis->episodes) {
+        if(m_newTabDialog->getTabType() == NewTabDialog::CatgeoryTab) {
+            Category* epiCat = categories->categories.find(episode->getCategoryUid()).value();
+            if(episode->getCategoryUid() != m_newTabDialog->getCategory() && epiCat->getParentUid() != m_newTabDialog->getCategory())
+                continue;
+            if(!catdone) {
+                catdone = true;
+                cat->setText(0, epiCat->getTitle());
+                ui->tabWidget->setTabText(newtab, epiCat->getTitle());
+            }
+        } else if(m_newTabDialog->getTabType() == NewTabDialog::AuthorTab) {
+            Author* author = authors->authors.find(m_newTabDialog->getAuthor()).value();
+            if(episode->getAuthorUid() != m_newTabDialog->getAuthor())
+                continue;
+            if(!catdone) {
+                catdone = true;
+                cat->setText(0, author->getName());
+                ui->tabWidget->setTabText(newtab, author->getName());
+            }
+        } else {
+            return;
+        }
+        addGameWidgetItem(episode, new QTreeWidgetItem(cat));
+    }
+    tabContent->expandAll();
+    ui->tabWidget->setCurrentIndex(newtab);
+
+
+}
+
+/**
+  * Slot - fired when a tab should be closed - remove tab and treewidget
+  *
+  *  @return void
+  *
+**/
+void MainWindow::closeTab(int index)
+{
+    if (index == -1) {
+            return;
+        }
+
+        QWidget* tabItem = ui->tabWidget->widget(index);
+        // Removes the tab at position index from this stack of widgets.
+        // The page widget itself is not deleted.
+        ui->tabWidget->removeTab(index);
+
+        delete(tabItem);
+        tabItem = nullptr;
+}
+
+/**
+ *
+ * About dialog
+ *
+ */
+
+/**
+  * Slot - fired when the about-button is clicked - show the about dialog
+  *
+  *  @return void
+  *
+**/
 void MainWindow::aboutMMMLauncher()
 {
     if (!m_aboutDialog) {
@@ -276,12 +1029,36 @@ void MainWindow::aboutMMMLauncher()
     m_aboutDialog->show();
 }
 
+/**
+  * Slot - fired when the about dialog should be closed - close about dialog
+  *
+  *  @return void
+  *
+**/
 void MainWindow::destroyAboutDialog()
 {
     if (m_aboutDialog) {
         m_aboutDialog->deleteLater();
         m_aboutDialog = 0;
     }
+}
+
+/**
+ *
+ * Restart / Close
+ *
+ */
+
+/**
+  * Slot - fired when the update button is clicked - a dirty workaround because the update runs at start
+  *
+  *  @return void
+  *
+**/
+void MainWindow::restartApp()
+{
+    QProcess::startDetached(QApplication::applicationFilePath());
+    exit(12);
 }
 
 
