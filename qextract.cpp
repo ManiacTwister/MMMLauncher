@@ -14,7 +14,7 @@ QExtract::QExtract(QString extractTo, QString archive, int atype)
     connect(extractProcess, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(finished(int,QProcess::ExitStatus)));
     #ifdef Q_OS_LINUX
         extractBinaryPath = "";
-    #elif defined(Q_OS_WINDOWS)
+    #elif defined(Q_OS_WIN)
         extractBinaryPath = QDir::currentPath() + "/Packer/";
     #endif
 }

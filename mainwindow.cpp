@@ -159,7 +159,7 @@ void MainWindow::episodeSelected()
     }
     file.close();
     ui->epiDescription->setPlainText(selectedEpisode->getDescription());
-    QDir *selectedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+    QDir *selectedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
 
     ui->directoryContent->clear();
 
@@ -738,7 +738,7 @@ void MainWindow::finishedDownload()
         epiDir->mkpath(".");
     }
 
-    epiDir->mkpath(selectedEpisode->getTitle());
+    epiDir->mkpath(selectedEpisode->getDirectory());
 
     int atype;
 
@@ -748,7 +748,7 @@ void MainWindow::finishedDownload()
         atype = ArchiveType::RarArchive;
     }
 
-    QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+    QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
 
     QExtract *extract = new QExtract(downloadedEpiDir->absolutePath(), downloadFileName, atype);
     extract->start();
@@ -768,7 +768,7 @@ void MainWindow::finishedDownload()
 void MainWindow::extractDone()
 {
     qDebug() << "Extract done";
-    QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+    QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
     cleanUpDirectory(downloadedEpiDir);
     setControlsDownloadFinished();
 }
@@ -878,7 +878,7 @@ QString MainWindow::searchGameExe(QDir *dir) {
 void MainWindow::startEpisode() {
     QStringList parameters;
     QProcess *process = new QProcess();
-    process->setWorkingDirectory(epiDir->absolutePath() + "/" + selectedEpisode->getTitle());
+    process->setWorkingDirectory(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
     #ifdef Q_OS_LINUX
         parameters << "-windowed";
         process->start("ags", parameters);
@@ -896,7 +896,7 @@ void MainWindow::startEpisode() {
 void MainWindow::setupEpisode() {
     #ifdef Q_OS_LINUX
      QMessageBox::information(0, "Information", "Diese Funktion steht unter Linux derzeit nicht zur verfügung.");
-    #elif defined(Q_OS_WINDOWS)
+    #elif defined(Q_OS_WIN)
      qDebug() << "Setup: "+ selectedEpisode->getGameExe();
     #endif
 }

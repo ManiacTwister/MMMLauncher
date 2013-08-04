@@ -32,6 +32,7 @@ public:
     int getEdgarCount();
     int getVotes();
     int getUid();
+    QString getDirectory();
 private:
     int categoryUid;
     int author;
