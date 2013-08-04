@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->buttonSetup, SIGNAL(clicked()), SLOT(setupEpisode()));
     connect(ui->buttonUpdate, SIGNAL(clicked()), SLOT(restartApp())); // Dirty but easy.. restart app and update jsons
     connect(ui->treeWidget, SIGNAL(itemSelectionChanged()), SLOT(episodeSelected()));
-    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(onTabChanged(int)));
+    connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(onTabChanged()));
     connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
 
     noEpiSelected();
@@ -104,10 +104,9 @@ void MainWindow::setupTreewidget(QTreeWidget* widget)
   *  @return void
   *
 **/
-void MainWindow::onTabChanged(int index)
+void MainWindow::onTabChanged()
 {
     if(currentTreeWidget->selectedItems().count() > 0) {
-        qDebug() << "test";
         currentTreeWidget->selectedItems()[0]->setSelected(false);
         noEpiSelected();
     }
@@ -746,6 +745,10 @@ void MainWindow::finishedDownload()
         atype = ArchiveType::ZipArchive;
     } else if(downloadFileInfo->completeSuffix() == "rar") {
         atype = ArchiveType::RarArchive;
+    } else {
+        QMessageBox::critical(0, "Error", "Keine passende Methode gefunden, um das Archiv zu entpacken!");
+        setControlsDownloadFinished();
+        return;
     }
 
     QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
@@ -894,10 +897,14 @@ void MainWindow::startEpisode() {
   *
 **/
 void MainWindow::setupEpisode() {
+    QProcess *process = new QProcess();
+    QString epiPath = QString(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory() + "/");
+    process->setWorkingDirectory(epiPath);
     #ifdef Q_OS_LINUX
-     QMessageBox::information(0, "Information", "Diese Funktion steht unter Linux derzeit nicht zur verfügung.");
+      QMessageBox::information(0, "Information", "Diese Funktion steht unter Linux derzeit nicht zur verfügung.");
     #elif defined(Q_OS_WIN)
-     qDebug() << "Setup: "+ selectedEpisode->getGameExe();
+      process->start(epiPath + "winsetup.exe");
+      qDebug() << process->errorString();
     #endif
 }
 

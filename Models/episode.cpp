@@ -82,6 +82,7 @@ QString Episode::getImage() { return screenshoturl; }
 QString Episode::getDownloadUrl() { return downloadurl; }
 QString Episode::getScreenshotUrl() { return screenshoturl; }
 QString Episode::getGameExe() { return gameExe; }
+QString Episode::getDirectory() { return title.replace(":", " -"); }
 int Episode::getEdgarCount() { return edgars; }
 int Episode::getVotes() { return votes; }
 int Episode::getUid() { return uid; }

@@ -116,7 +116,7 @@ private slots:
     void setupEpisode();
     void newTabButton();
     void openNewTab();
-    void onTabChanged(int index);
+    void onTabChanged();
     void closeTab(int index);
 };
 
