@@ -22,10 +22,11 @@ namespace Ui {
 class MainWindow;
 }
 
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -41,6 +42,7 @@ private:
     FileDownloader *downloader;
     FileDownloader *categoryDownloader;
     FileDownloader *authorDownloader;
+    FileDownloader *screenDownloader;
     EpiDownloader *epidownloader;
 
     QTreeWidget *currentTreeWidget;
@@ -55,6 +57,8 @@ private:
     QString downloadFileName;
     QNetworkReply *downloadReply;
 
+    QFile *screenDownloadFile;
+
     /*QTreeWidgetItem *catEpisodes;
     QTreeWidgetItem *catSpecials;
     QTreeWidgetItem *catTrailerDemo;*/
@@ -63,6 +67,8 @@ private:
 
     QSettings *settings;
     QDir *epiDir;
+    QDir *screenDir;
+
     bool updatingAny = false;
     bool authorsUpdate = false;
     bool categoriesUpdate = false;
@@ -70,6 +76,7 @@ private:
 
     void readingReadyBytes();
     void setNoimage();
+    void setImage();
     void noEpiSelected();
     void setControlsDownloading();
     void setControlsDownloadFinished();
@@ -118,6 +125,8 @@ private slots:
     void openNewTab();
     void onTabChanged();
     void closeTab(int index);
+    void openAdditionalFile(QTreeWidgetItem* item);
+    void downloadedScreenshot();
 };
 
 #endif // MAINWINDOW_H

@@ -9,6 +9,7 @@ class ArchiveType
 public:
     static const int RarArchive = 0;
     static const int ZipArchive = 1;
+    static const int SevenZipArchive = 2;
 };
 
 class QExtract : public QObject

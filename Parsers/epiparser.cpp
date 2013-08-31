@@ -33,13 +33,13 @@ void EpiParser::parse()
 
         foreach (const QJsonValue &epi, epis) {
             QJsonObject epiObject = epi.toObject();
-            int id;
+            int id = -1;
             QString title = tr("Unbekannt");
             int authorUid = -1;
             QString description = tr("- Keine Beschreibung verfügbar -");
-            QString screenshotUrl = "http://launcher.maniactwister.de/noscreen.png";
+            QString screenshotUrl = QString();
             int categoryUid = -1;
-            QString downloadUrl = "nodownload";
+            QString downloadUrl = QString();
 
             if(!epiObject["id"].isNull()) {
                 id = (int) epiObject["id"].toDouble();

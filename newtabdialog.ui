@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>MMMLauncher - New Tab</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="mmml.qrc">
+    <normaloff>:/images/images/chuck.png</normaloff>:/images/images/chuck.png</iconset>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
@@ -129,7 +133,9 @@
    <widget class="QWidget" name="page_3"/>
   </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="mmml.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

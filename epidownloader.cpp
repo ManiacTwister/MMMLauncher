@@ -3,6 +3,7 @@
 #include <QUrl>
 #include <QNetworkRequest>
 #include <QDebug>
+#include <QApplication>
 
 EpiDownloader::EpiDownloader(QString dlurl, QObject *parent):QNetworkAccessManager(parent)
 {
@@ -11,6 +12,7 @@ EpiDownloader::EpiDownloader(QString dlurl, QObject *parent):QNetworkAccessManag
     connect(this, SIGNAL(finished(QNetworkReply*)), this, SLOT(fin(QNetworkReply*)));
 
     QNetworkRequest req(url);
+    req.setRawHeader("User-Agent", USERAGENT);
     mCurrentReply = this->get(req);
     connect(mCurrentReply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(dlProgress(qint64,qint64)));
     downloadTime.start();
@@ -24,6 +26,7 @@ void EpiDownloader::fin(QNetworkReply * pReply)
     if(pReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 307 || pReply->rawHeaderList().contains("Location"))
     {
         QNetworkRequest req(pReply->header(QNetworkRequest::LocationHeader).toString());
+        req.setRawHeader("User-Agent", USERAGENT);
         filename = pReply->header(QNetworkRequest::LocationHeader).toString();
         mCurrentReply = this->get(req);
         connect(mCurrentReply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(dlProgress(qint64,qint64)));

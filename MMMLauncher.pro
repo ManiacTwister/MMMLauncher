@@ -5,15 +5,19 @@
 #-------------------------------------------------
 
 QT       += core gui network
-CONFIG += console c++11
+CONFIG += qt console c++11
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = MMMLauncher
+TARGET = mmmlauncher
 TEMPLATE = app
 
 
-VERSION = 3.0
+VERSION = "3.0.5"
+USERAGENT = MMMLauncher/$$VERSION
 DEFINES += APPLICATION_VERSION=\"\\\"$$VERSION\\\"\"
+DEFINES += USERAGENT=\"\\\"$$USERAGENT\\\"\"
+
+win32:RC_FILE = MMMLauncher.rc
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -28,7 +32,8 @@ SOURCES += main.cpp\
     Models/category.cpp \
     Parsers/categoryparser.cpp \
     Parsers/epiparser.cpp \
-    Parsers/authorparser.cpp
+    Parsers/authorparser.cpp \
+    version.cpp
 
 HEADERS  += mainwindow.h \
     filedownloader.h \
@@ -42,10 +47,21 @@ HEADERS  += mainwindow.h \
     Models/category.h \
     Parsers/categoryparser.h \
     Parsers/epiparser.h \
-    Parsers/authorparser.h
+    Parsers/authorparser.h \
+    version.h
 
 FORMS    += mainwindow.ui \
     newtabdialog.ui
 
 RESOURCES += \
     mmml.qrc
+
+binfile.files += mmmlauncher
+binfile.path = /usr/bin/
+shortcutfiles.files += data/MMMLauncher.desktop
+shortcutfiles.path = /usr/share/applications/
+pixmapfile.path = /usr/share/icons/hicolor/32x32/apps/
+pixmapfile.files = mmmlauncher.png
+INSTALLS += shortcutfiles
+INSTALLS += binfile
+INSTALLS += pixmapfile

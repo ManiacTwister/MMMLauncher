@@ -32,8 +32,8 @@
    <string>MMMLauncher</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>:/images/images/epi.ico</normaloff>:/images/images/epi.ico</iconset>
+   <iconset resource="mmml.qrc">
+    <normaloff>:/images/images/chuck.png</normaloff>:/images/images/chuck.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="minimumSize">
@@ -137,7 +137,7 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>646</y>
+      <y>650</y>
       <width>260</width>
       <height>23</height>
      </rect>
@@ -251,7 +251,7 @@
       <x>10</x>
       <y>530</y>
       <width>320</width>
-      <height>139</height>
+      <height>143</height>
      </rect>
     </property>
     <property name="minimumSize">
@@ -263,7 +263,7 @@
     <property name="maximumSize">
      <size>
       <width>316</width>
-      <height>139</height>
+      <height>143</height>
      </size>
     </property>
     <property name="readOnly">
@@ -330,8 +330,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>591</width>
-        <height>261</height>
+        <width>587</width>
+        <height>266</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -379,6 +379,8 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="mmml.qrc"/>
+ </resources>
  <connections/>
 </ui>

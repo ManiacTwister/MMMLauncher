@@ -3,6 +3,9 @@
 #include <QGraphicsScene>
 #include "category.h"
 #include <QDebug>
+#include <QFileInfo>
+#include <QUrl>
+
 Episode::Episode()
 {
 }
@@ -78,7 +81,11 @@ QIcon Episode::getCategoryIcon()
     }
     return QIcon(":/images/images/chuck.png");
 }
-QString Episode::getImage() { return screenshoturl; }
+QString Episode::getImage() {
+    QUrl screenUrl = QUrl(getScreenshotUrl());
+    QFileInfo fileInf(screenUrl.path());
+    return fileInf.fileName();
+}
 QString Episode::getDownloadUrl() { return downloadurl; }
 QString Episode::getScreenshotUrl() { return screenshoturl; }
 QString Episode::getGameExe() { return gameExe; }

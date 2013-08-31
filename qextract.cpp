@@ -24,17 +24,24 @@ void QExtract::start()
     QStringList parameters;
     QString basePath(extractPath);
     extractProcess->setWorkingDirectory(extractPath);
-
-    if(archiveType == ArchiveType::ZipArchive) {
-        parameters << "-o" << archiveFile << "-d" << extractPath;
-        extractProcess->start(QString(extractBinaryPath + "unzip"), parameters);
-    } else if(archiveType == ArchiveType::RarArchive) {
-        //-o+ tells unrar to automatically overwrite.
-        //-p- tells unrar to not prompt for password. Not sure what the outcome will be. think is will probably just end maybe with error?
-        parameters << "e" << "-o+" << "-p-" << archiveFile << basePath;
-        extractProcess->start(QString("unrar"), parameters);
-    }
-
+    #ifdef Q_OS_LINUX
+    qDebug() << archiveType << " " << ArchiveType::SevenZipArchive;
+        if(archiveType == ArchiveType::ZipArchive) {
+            parameters << "-o" << archiveFile << "-d" << extractPath;
+            extractProcess->start(QString("unzip"), parameters);
+        } else if(archiveType == ArchiveType::RarArchive) {
+            //-o+ tells unrar to automatically overwrite.
+            //-p- tells unrar to not prompt for password. Not sure what the outcome will be. think is will probably just end maybe with error?
+            parameters << "e" << "-o+" << "-p-" << archiveFile << basePath;
+            extractProcess->start(QString("unrar"), parameters);
+        } else if(archiveType == ArchiveType::SevenZipArchive) {
+            parameters << "x" << archiveFile << "-o" + extractPath;
+            extractProcess->start(QString("7za"), parameters);
+        }
+    #elif defined(Q_OS_WIN)
+        parameters << "e" << "-o"+extractPath << "-aou" << "-y" << archiveFile;
+        extractProcess->start(QString(extractBinaryPath + "7z/7z.exe"), parameters);
+    #endif
 
     qDebug() << "extract launch: " << archiveFile;
 

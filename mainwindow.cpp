@@ -7,6 +7,7 @@
 #include "Models/category.h"
 #include "Models/author.h"
 #include "qextract.h"
+#include "version.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -24,6 +25,8 @@
 #include <QFont>
 #include "newtabdialog.h"
 #include <QIODevice>
+#include <QDesktopServices>
+#include <QFileDialog>
 
 
 /**
@@ -38,13 +41,20 @@ MainWindow::MainWindow(QWidget *parent) :
     m_aboutDialog(0),
     ui(new Ui::MainWindow)
 {
-    settings = new QSettings(QDir::currentPath() + "/my_config_file.ini", QSettings::IniFormat);
+    settings = new QSettings(/*settings->value("baseDir").toString() + "/.config.ini", */QSettings::IniFormat, QSettings::UserScope, "MMMLauncher");
+    if(settings->value("baseDir").isNull()) {
+        QString destination = QFileDialog::getExistingDirectory(this,
+        "Select destionation folder",
+        ".");
+        settings->setValue("baseDir", destination);
+    }
     settings->setValue("apiUrl", QUrl("http://launcher.maniactwister.de/api2/"));
     settings->setValue("updateUrl", QUrl("http://launcher.maniactwister.de/lastupdate"));
-    settings->setValue("epiDir", QDir::currentPath()+"/"+"Episoden");
-    settings->setValue("epiJson", QDir::currentPath()+"/"+".episoden.json");
-    settings->setValue("categoryJson", QDir::currentPath()+"/"+".categories.json");
-    settings->setValue("authorJson", QDir::currentPath()+"/"+".authors.json");
+    settings->setValue("epiDir", settings->value("baseDir").toString()+"/"+"Episoden");
+    settings->setValue("screenDir", settings->value("baseDir").toString()+"/"+"Screenshots");
+    settings->setValue("epiJson", settings->value("baseDir").toString()+"/"+".episoden.json");
+    settings->setValue("categoryJson", settings->value("baseDir").toString()+"/"+".categories.json");
+    settings->setValue("authorJson", settings->value("baseDir").toString()+"/"+".authors.json");
     settings->sync();
 
     //QStringList list;
@@ -61,9 +71,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->treeWidget, SIGNAL(itemSelectionChanged()), SLOT(episodeSelected()));
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(onTabChanged()));
     connect(ui->tabWidget, SIGNAL(tabCloseRequested(int)), this, SLOT(closeTab(int)));
+    connect(ui->directoryContent, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), SLOT(openAdditionalFile(QTreeWidgetItem*)));
 
     noEpiSelected();
     epiDir = new QDir(settings->value("epiDir").toString());
+    screenDir = new QDir(settings->value("screenDir").toString());
 
     // epiDescription background
     ui->epiDescription->viewport()->setAutoFillBackground(false);
@@ -145,18 +157,9 @@ void MainWindow::episodeSelected()
 
     QTreeWidgetItem* item = currentTreeWidget->selectedItems()[0];
     selectedEpisode = epis->episodes.find(item->data(0,Qt::UserRole).toInt()).value();
-    QString image = "/home/maniactwister/Projects/Qt/MMMLauncher/images/Screenshots/"+ selectedEpisode->getImage();
-    QFile file(image);
 
-    if(file.exists()) {
-        scene = new QGraphicsScene();
-        scene->addPixmap(QPixmap(image));
-        ui->epiScreenshoot->setScene(scene);
-    } else {
-        setNoimage();
-        item->data(0,Qt::UserRole).toInt();
-    }
-    file.close();
+    setImage();
+
     ui->epiDescription->setPlainText(selectedEpisode->getDescription());
     QDir *selectedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
 
@@ -246,6 +249,43 @@ QString MainWindow::getFileIconName(QFileInfo fileInfo) {
     return "false";
 }
 
+void MainWindow::openAdditionalFile(QTreeWidgetItem* item) {
+    QFileInfo* fileInfo = new QFileInfo(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory() + "/" + item->text(0));
+    if(fileInfo->exists()) {
+        QString suffix = fileInfo->suffix().toLower();
+        if(suffix == "tra") {
+            if(QMessageBox::question(this, tr("Setup starten?"), tr("Die entsprechende Datei ist eine Übersetzung für das Spiel. Möchten Sie das Spielsetup, wenn möglich, jetzt starten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
+                setupEpisode();
+            }
+        } else if(/*Info.filfileeName().toLower() == "agssave"*/suffix.toInt()) {
+            if(QMessageBox::question(this, tr("Spiel starten?"), tr("Die entsprechende Datei ist ein Savegame für das Spiel. Möchten Sie das Spiel, wenn möglich, jetzt starten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
+                startEpisode();
+            }
+        } else if(suffix == "agr") {
+            QMessageBox::information(this, "Kann Datei nicht öffen", tr("Die entsprechende Datei kann jetzt nicht geöffnet werden. Versuchen Sie, die Datei mit dem Adventure Game Studio zu öffnen!"));
+        } else {
+            QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo->absoluteFilePath()));
+        }
+    }
+}
+
+void MainWindow::setImage() {
+    if(selectedEpisode->getImage().isNull()) {
+        setNoimage();
+        return;
+    }
+    QString image = screenDir->absolutePath() + "/" + selectedEpisode->getImage();
+    QFile file(image);
+    if(file.exists()) {
+        scene = new QGraphicsScene();
+        scene->addPixmap(QPixmap(image));
+        ui->epiScreenshoot->setScene(scene);
+    } else {
+        setNoimage();
+
+    }
+}
+
 /**
   *  Set default image if no image is available
   *
@@ -331,6 +371,9 @@ void MainWindow::checkIfUpdateNeeded()
     bool updateNeeded = false;
     QJsonDocument json = QJsonDocument::fromJson(downloader->downloadedData(), &parseError);
 
+    // Set progressbar scrolling
+    ui->progressBar->setMaximum(0);
+    ui->progressBar->setMinimum(0);
 
     QFile file;
     file.setFileName(settings->value("epiJson").toString());
@@ -339,7 +382,7 @@ void MainWindow::checkIfUpdateNeeded()
         data = file.readAll();
         QJsonDocument existingJson = QJsonDocument::fromJson(data, &existingParseError);
 
-        if(parseError.error == QJsonParseError::NoError)
+        if(existingParseError.error == QJsonParseError::NoError)
         {
             QJsonObject ob = existingJson.object();
             QJsonObject meta = ob["meta"].toObject();
@@ -358,14 +401,15 @@ void MainWindow::checkIfUpdateNeeded()
         QJsonObject ob = json.object();
         QJsonObject meta = ob["meta"].toObject();
         QDateTime lastupdate = QDateTime::fromString(meta["lastupdate"].toString(), "yyyy-MM-dd hh:mm:ss");
+        Version lastVersion(meta["lastlauncherversion"].toString().toStdString());
+        Version currentVersion(QApplication::applicationVersion().toStdString());
 
-        if(meta["lastlauncherversion"].toDouble() > QApplication::applicationVersion().toDouble()) {
-            QLocale c(QLocale::C);
+        if(currentVersion < lastVersion) {
             QMessageBox::information(0, tr("Update verfügbar!"),
                                      tr("Eine neue MMMLauncher Version ist verfügbar!\nIhre Version: %1  Aktuelle Version: %2")
                                         .arg(
                                              QString(QApplication::applicationVersion()),
-                                             c.toString(meta["lastlauncherversion"].toDouble(), 'f', 1)
+                                             meta["lastlauncherversion"].toString()
                                          )
                                     );
         }
@@ -398,6 +442,9 @@ void MainWindow::checkIfUpdateNeeded()
 
             }
         }
+    } else {
+        qDebug() << "Lastupdate api broken ... uhm.";
+        initUpdate();
     }
     if(updateNeeded) {
         initUpdate();
@@ -414,6 +461,7 @@ void MainWindow::checkIfUpdateNeeded()
 **/
 void MainWindow::initUpdate()
 {
+    updatingAny = true;
     downloadCategories();
     downloadAuthors();
     downloadGames();
@@ -505,9 +553,11 @@ void MainWindow::updateCategories(QByteArray data) {
 
     ui->treeWidget->expandAll();
 
-    if((authors->parsed || !authorsUpdate) && !episUpdate) {
+    if(updatingAny && (authors->parsed || !authorsUpdate) && !episUpdate) {
         updateGames(loadCacheFile(settings->value("epiJson").toString()));
     }
+
+    qDebug() << "Categories parsed";
 }
 
 /**
@@ -533,9 +583,10 @@ void MainWindow::updateAuthors(QByteArray data) {
     authors = new AuthorParser(data);
     authors->parse();
 
-    if((categories->parsed || !categoriesUpdate) && !episUpdate) {
+    if(updatingAny && (categories->parsed || !categoriesUpdate) && !episUpdate) {
         updateGames(loadCacheFile(settings->value("epiJson").toString()));
     }
+    qDebug() << "Authors parsed";
 }
 
 /**
@@ -551,6 +602,7 @@ void MainWindow::updateGames() {
     if((!authorsUpdate && !categoriesUpdate) || (categories->parsed && authors->parsed)) {
             updateGames(loadCacheFile(settings->value("epiJson").toString()));
     }
+    qDebug() << "Games downloaded";
 }
 
 /**
@@ -562,12 +614,16 @@ void MainWindow::updateGames() {
 **/
 void MainWindow::updateGames(QByteArray data)
 {
+    qDebug() << "called";
     epis = new EpiParser(data);
     epis->parse();
 
     foreach (Episode* episode, epis->episodes) {
         addGameWidgetItem(episode);
     }
+
+    ui->progressBar->setMaximum(0);
+    ui->progressBar->setMinimum(100);
 }
 
 /**
@@ -689,8 +745,28 @@ void MainWindow::downloadEpisode(Episode* episode)
     connect(epidownloader, SIGNAL(readReady(QByteArray)), SLOT(readReady(QByteArray)));
     connect(epidownloader, SIGNAL(downloadProgress(qint64, qint64, double, QString)), SLOT(downloadProgress(qint64, qint64/*, double, QString*/)));
 
-    downloadFile = new QFile(QDir::currentPath() + "/" + "temp");
+    downloadFile = new QFile(settings->value("baseDir").toString() + "/" + "temp");
     downloadFile->open(QIODevice::WriteOnly);
+
+    if (!screenDir->exists()) {
+        screenDir->mkpath(".");
+    }
+    if(!selectedEpisode->getImage().isNull()) {
+        QUrl screenUrl = QUrl(episode->getScreenshotUrl());
+        screenDownloader = new FileDownloader(screenUrl, this);
+        connect(screenDownloader, SIGNAL(downloaded()), SLOT(downloadedScreenshot()));
+
+        screenDownloadFile = new QFile(screenDir->absolutePath() + "/" + selectedEpisode->getImage());
+        screenDownloadFile->open(QIODevice::WriteOnly);
+        qDebug() << screenDir->absolutePath() + "/" + selectedEpisode->getImage();
+    }
+}
+
+void MainWindow::downloadedScreenshot() {
+    qDebug() << "test";
+    screenDownloadFile->write(screenDownloader->downloadedData());
+    screenDownloadFile->close();
+    setImage();
 }
 
 /**
@@ -727,8 +803,8 @@ void MainWindow::readReady(QByteArray bytes)
 **/
 void MainWindow::finishedDownload()
 {
-    downloadFileInfo = new QFileInfo(epidownloader->filename); //maybe url.toString() might also be good
-    downloadFileName = QDir::currentPath() + "/" + downloadFileInfo->fileName();
+    downloadFileInfo = new QFileInfo(epidownloader->filename);
+    downloadFileName = settings->value("baseDir").toString() + "/" + downloadFileInfo->fileName();
 
     downloadFile->rename(downloadFileName);
     qDebug() << QString("Downloaded " + downloadFileInfo->fileName());
@@ -745,6 +821,8 @@ void MainWindow::finishedDownload()
         atype = ArchiveType::ZipArchive;
     } else if(downloadFileInfo->completeSuffix() == "rar") {
         atype = ArchiveType::RarArchive;
+    } else if(downloadFileInfo->completeSuffix() == "7z") {
+        atype = ArchiveType::SevenZipArchive;
     } else {
         QMessageBox::critical(0, "Error", "Keine passende Methode gefunden, um das Archiv zu entpacken!");
         setControlsDownloadFinished();
@@ -756,8 +834,7 @@ void MainWindow::finishedDownload()
     QExtract *extract = new QExtract(downloadedEpiDir->absolutePath(), downloadFileName, atype);
     extract->start();
     connect(extract, SIGNAL(endExtractSignal()), SLOT(extractDone()));
-    //downloadFile->remove();
-    //downloadFile->close();
+
     ui->progressBar->setMaximum(0);
     ui->progressBar->setMinimum(0);
 }
@@ -773,6 +850,8 @@ void MainWindow::extractDone()
     qDebug() << "Extract done";
     QDir *downloadedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
     cleanUpDirectory(downloadedEpiDir);
+    downloadFile->remove();
+    downloadFile->close();
     setControlsDownloadFinished();
 }
 
@@ -885,7 +964,7 @@ void MainWindow::startEpisode() {
     #ifdef Q_OS_LINUX
         parameters << "-windowed";
         process->start("ags", parameters);
-    #elif defined(Q_OS_WINDOWS)
+    #elif defined(Q_OS_WIN)
         process->start(selectedEpisode->getGameExe(), parameters);
     #endif
 }
@@ -897,13 +976,14 @@ void MainWindow::startEpisode() {
   *
 **/
 void MainWindow::setupEpisode() {
+    QStringList parameters;
     QProcess *process = new QProcess();
     QString epiPath = QString(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory() + "/");
     process->setWorkingDirectory(epiPath);
     #ifdef Q_OS_LINUX
       QMessageBox::information(0, "Information", "Diese Funktion steht unter Linux derzeit nicht zur verfügung.");
     #elif defined(Q_OS_WIN)
-      process->start(epiPath + "winsetup.exe");
+      process->start(epiPath + "winsetup.exe", parameters);
       qDebug() << process->errorString();
     #endif
 }

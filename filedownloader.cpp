@@ -1,4 +1,5 @@
 #include "filedownloader.h"
+#include <QApplication>
 
 FileDownloader::FileDownloader(QUrl url, QObject *parent) :
     QObject(parent)
@@ -7,6 +8,7 @@ FileDownloader::FileDownloader(QUrl url, QObject *parent) :
                 SLOT(fileDownloaded(QNetworkReply*)));
 
     QNetworkRequest request(url);
+    request.setRawHeader("User-Agent", USERAGENT);
     m_WebCtrl.get(request);
 }
 
