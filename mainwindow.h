@@ -10,6 +10,7 @@
 #include <QTreeWidgetItem>
 #include <QFileInfo>
 #include <QSettings>
+#include <QMapIterator>
 #include "filedownloader.h"
 #include "epidownloader.h"
 #include "aboutdialog.h"
@@ -17,6 +18,7 @@
 #include "Parsers/categoryparser.h"
 #include "Parsers/authorparser.h"
 #include "newtabdialog.h"
+#include "Models/episode.h"
 
 namespace Ui {
 class MainWindow;
@@ -74,6 +76,10 @@ private:
     bool categoriesUpdate = false;
     bool episUpdate = false;
 
+    bool downloadingAll = false;
+    int downloadAllIndex = 0;
+    //QMapIterator<int, Episode*> downloadAllIterator();
+
     void readingReadyBytes();
     void setNoimage();
     void setImage();
@@ -101,6 +107,7 @@ private:
     void setupTreewidget(QTreeWidget* widget);
     void setCurrentTreeWidget();
     void downloadEpisode(Episode* episode);
+    void downloadNext();
 
 
 
@@ -115,6 +122,7 @@ private slots:
     void episodeSelected();
     /*void episodeSelected(QModelIndex row);*/
     void downloadEpisode();
+    void downloadAll();
     void finishedDownload();
     void readReady(QByteArray bytes);
     void downloadProgress(qint64 bytesReceived, qint64 bytesToal/*, double speed, QString unit*/);

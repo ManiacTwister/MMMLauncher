@@ -35,7 +35,7 @@ void QExtract::start()
             parameters << "e" << "-o+" << "-p-" << archiveFile << basePath;
             extractProcess->start(QString("unrar"), parameters);
         } else if(archiveType == ArchiveType::SevenZipArchive) {
-            parameters << "x" << archiveFile << "-o" + extractPath;
+            parameters << "x" << archiveFile << "-o" + extractPath << "-aou" << "-y";
             extractProcess->start(QString("7za"), parameters);
         }
     #elif defined(Q_OS_WIN)

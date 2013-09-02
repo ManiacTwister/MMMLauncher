@@ -65,6 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->buttonAbout, SIGNAL(clicked()), SLOT(aboutMMMLauncher()));
     connect(ui->buttonDownload, SIGNAL(clicked()), SLOT(downloadEpisode()));
+    connect(ui->buttonDownloadall, SIGNAL(clicked()), SLOT(downloadAll()));
     connect(ui->buttonStart, SIGNAL(clicked()), SLOT(startEpisode()));
     connect(ui->buttonSetup, SIGNAL(clicked()), SLOT(setupEpisode()));
     connect(ui->buttonUpdate, SIGNAL(clicked()), SLOT(restartApp())); // Dirty but easy.. restart app and update jsons
@@ -728,6 +729,19 @@ void MainWindow::downloadEpisode()
 }
 
 /**
+  *  Slot - Download all episodes
+  *
+  *  @return void
+  *
+**/
+void MainWindow::downloadAll()
+{
+    downloadAllIndex = 0;
+    downloadingAll = true;
+    downloadNext();
+}
+
+/**
   *  Download the given episode
   *
   *  @param Episode* episode
@@ -751,22 +765,49 @@ void MainWindow::downloadEpisode(Episode* episode)
     if (!screenDir->exists()) {
         screenDir->mkpath(".");
     }
-    if(!selectedEpisode->getImage().isNull()) {
+    if(!episode->getImage().isNull()) {
         QUrl screenUrl = QUrl(episode->getScreenshotUrl());
         screenDownloader = new FileDownloader(screenUrl, this);
         connect(screenDownloader, SIGNAL(downloaded()), SLOT(downloadedScreenshot()));
 
-        screenDownloadFile = new QFile(screenDir->absolutePath() + "/" + selectedEpisode->getImage());
+        screenDownloadFile = new QFile(screenDir->absolutePath() + "/" + episode->getImage());
         screenDownloadFile->open(QIODevice::WriteOnly);
-        qDebug() << screenDir->absolutePath() + "/" + selectedEpisode->getImage();
+        qDebug() << screenDir->absolutePath() + "/" + episode->getImage();
     }
 }
 
-void MainWindow::downloadedScreenshot() {
-    qDebug() << "test";
+void MainWindow::downloadedScreenshot()
+{
     screenDownloadFile->write(screenDownloader->downloadedData());
     screenDownloadFile->close();
     setImage();
+}
+
+/**
+  *  Download the next episode
+  *
+  *  @return void
+  *
+**/
+void MainWindow::downloadNext()
+{
+    qDebug() << epis->episodes.count() << " - " << downloadAllIndex;
+    if(downloadAllIndex <= epis->episodes.count()) {
+        if(epis->episodes.contains(downloadAllIndex)) {
+            Episode * episode = epis->episodes[downloadAllIndex];
+            selectedEpisode = episode;
+            downloadEpisode(episode);
+        } else {
+            downloadAllIndex++;
+            downloadNext();
+            return;
+        }
+        downloadAllIndex++;
+    } else {
+        downloadingAll = false;
+        downloadAllIndex = 0;
+        setControlsDownloadFinished();
+    }
 }
 
 /**
@@ -817,13 +858,23 @@ void MainWindow::finishedDownload()
 
     int atype;
 
-    if(downloadFileInfo->completeSuffix() == "zip") {
+    if(downloadFileInfo->suffix() == "zip") {
         atype = ArchiveType::ZipArchive;
-    } else if(downloadFileInfo->completeSuffix() == "rar") {
+    } else if(downloadFileInfo->suffix() == "rar") {
         atype = ArchiveType::RarArchive;
-    } else if(downloadFileInfo->completeSuffix() == "7z") {
+    } else if(downloadFileInfo->suffix() == "7z") {
         atype = ArchiveType::SevenZipArchive;
+    } else if(downloadFileInfo->suffix() == "exe") {
+        downloadFile->remove();
+        if(downloadingAll) {
+            downloadNext();
+            return;
+        }
+
+        setControlsDownloadFinished();
+        return;
     } else {
+        downloadFile->remove();
         QMessageBox::critical(0, "Error", "Keine passende Methode gefunden, um das Archiv zu entpacken!");
         setControlsDownloadFinished();
         return;
@@ -852,6 +903,10 @@ void MainWindow::extractDone()
     cleanUpDirectory(downloadedEpiDir);
     downloadFile->remove();
     downloadFile->close();
+    if(downloadingAll) {
+        downloadNext();
+        return;
+    }
     setControlsDownloadFinished();
 }
 
