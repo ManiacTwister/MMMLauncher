@@ -11,9 +11,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = mmmlauncher
 TEMPLATE = app
 
+OS_T = "Unknown"
+win32:OS_T = "Windows"
+unix:OS_T = "Unix"
 
 VERSION = "3.0.6"
-USERAGENT = MMMLauncher/$$VERSION
+USERAGENT = MMMLauncher/$$VERSION/$$OS_T
 DEFINES += APPLICATION_VERSION=\"\\\"$$VERSION\\\"\"
 DEFINES += USERAGENT=\"\\\"$$USERAGENT\\\"\"
 
