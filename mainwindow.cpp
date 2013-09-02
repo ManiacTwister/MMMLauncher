@@ -865,7 +865,7 @@ void MainWindow::finishedDownload()
     } else if(downloadFileInfo->suffix() == "7z") {
         atype = ArchiveType::SevenZipArchive;
     } else if(downloadFileInfo->suffix() == "exe") {
-        downloadFile->remove();
+        downloadFile->rename(selectedEpisode->getDirectory() + "/" + downloadFileInfo->fileName());
         if(downloadingAll) {
             downloadNext();
             return;
