@@ -736,9 +736,11 @@ void MainWindow::downloadEpisode()
 **/
 void MainWindow::downloadAll()
 {
-    downloadAllIndex = 0;
-    downloadingAll = true;
-    downloadNext();
+    if(QMessageBox::question(this, tr("Alles laden?"), tr("Sind Sie sich sicher, dass Sie alle Episoden laden möchten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
+        downloadAllIndex = 0;
+        downloadingAll = true;
+        downloadNext();
+    }
 }
 
 /**
