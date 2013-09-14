@@ -42,19 +42,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     settings = new QSettings(/*settings->value("baseDir").toString() + "/.config.ini", */QSettings::IniFormat, QSettings::UserScope, "MMMLauncher");
+
     if(settings->value("baseDir").isNull()) {
-        QString destination = QFileDialog::getExistingDirectory(this,
-        "Select destionation folder",
-        ".");
+        QString destination = QFileDialog::getExistingDirectory(this, "Select destionation folder", ".");
         settings->setValue("baseDir", destination);
     }
-    settings->setValue("apiUrl", QUrl("http://launcher.maniactwister.de/api2/"));
-    settings->setValue("updateUrl", QUrl("http://launcher.maniactwister.de/lastupdate"));
-    settings->setValue("epiDir", settings->value("baseDir").toString()+"/"+"Episoden");
-    settings->setValue("screenDir", settings->value("baseDir").toString()+"/"+"Screenshots");
-    settings->setValue("epiJson", settings->value("baseDir").toString()+"/"+".episoden.json");
-    settings->setValue("categoryJson", settings->value("baseDir").toString()+"/"+".categories.json");
-    settings->setValue("authorJson", settings->value("baseDir").toString()+"/"+".authors.json");
+
+    settings->setValue("apiUrl",        QUrl("http://launcher.maniactwister.de/api2/"));
+    settings->setValue("updateUrl",     QUrl("http://launcher.maniactwister.de/lastupdate"));
+    settings->setValue("epiDir",        settings->value("baseDir").toString() + "/" + "Episoden");
+    settings->setValue("screenDir",     settings->value("baseDir").toString() + "/" + "Screenshots");
+    settings->setValue("epiJson",       settings->value("baseDir").toString() + "/" + ".episoden.json");
+    settings->setValue("categoryJson",  settings->value("baseDir").toString() + "/" + ".categories.json");
+    settings->setValue("authorJson",    settings->value("baseDir").toString() + "/" + ".authors.json");
     settings->sync();
 
     //QStringList list;
