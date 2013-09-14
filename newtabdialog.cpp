@@ -10,8 +10,8 @@ NewTabDialog::NewTabDialog(AuthorParser* authors, CategoryParser* categories, QW
 {
     ui->setupUi(this);
     ui->tabType->addItem("");
-    ui->tabType->addItem("Category", NewTabDialog::CatgeoryTab);
-    ui->tabType->addItem("Author", NewTabDialog::AuthorTab);
+    ui->tabType->addItem(tr("Category"), NewTabDialog::CatgeoryTab);
+    ui->tabType->addItem(tr("Author"), NewTabDialog::AuthorTab);
     ui->stackedWidget->setCurrentIndex(2);
     connect(ui->tabType , SIGNAL(currentIndexChanged(int)),this,SLOT(tabTypeChanged(int)));
 
