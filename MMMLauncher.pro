@@ -15,7 +15,7 @@ OS_T = "Unknown"
 win32:OS_T = "Windows"
 unix:OS_T = "Unix"
 
-VERSION = "3.0.6"
+VERSION = "3.0.7-dev"
 USERAGENT = MMMLauncher/$$VERSION/$$OS_T
 DEFINES += APPLICATION_VERSION=\"\\\"$$VERSION\\\"\"
 DEFINES += USERAGENT=\"\\\"$$USERAGENT\\\"\"
