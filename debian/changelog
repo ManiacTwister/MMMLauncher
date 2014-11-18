@@ -1,3 +1,10 @@
+mmmlauncher (3.0.7-1) raring; urgency=high
+
+  * Fixed unusable launcher if the given directory doesn't exists
+  * Added settings dialog
+
+ -- ManiacTwister <maniactwister@s7t.de>  Tue, 18 Nov 2014 22:22:42 +0100
+
 mmmlauncher (3.0.6-1) raring; urgency=high
 
   * Added "Download all" featue
