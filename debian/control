@@ -1,0 +1,14 @@
+Source: mmmlauncher
+Section: games
+Priority: extra
+Maintainer: ManiacTwister <maniactwister@s7t.de>
+Build-Depends: debhelper (>= 8.0.0), qtbase5-dev, qt5-qmake, qtchooser, unzip, unrar
+Standards-Version: 3.9.4
+Homepage: http://launcher.s7t.de
+#Vcs-Git: git://git.debian.org/collab-maint/mmmlauncher.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/mmmlauncher.git;a=summary
+
+Package: mmmlauncher
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A launcher for Maniac Mansion Mania episodes
