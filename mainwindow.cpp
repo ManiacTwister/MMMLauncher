@@ -27,7 +27,8 @@
 #include <QIODevice>
 #include <QDesktopServices>
 #include <QFileDialog>
-
+#include <QDialogButtonBox>
+#include "desktop.h"
 
 /**
   *  Create mainwindow
@@ -43,19 +44,20 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     settings = new QSettings(/*settings->value("baseDir").toString() + "/.config.ini", */QSettings::IniFormat, QSettings::UserScope, "MMMLauncher");
 
-    if(settings->value("baseDir").isNull()) {
-        QString destination = QFileDialog::getExistingDirectory(this, "Select destionation folder", ".");
+    if(settings->value("baseDir").isNull() || settings->value("baseDir").toString().isEmpty() || !QDir(settings->value("baseDir").toString()).exists()) {
+        QMessageBox::information(this, "Setup", tr("Bevor der Launcher benutzt werden kann, muss ein Ordner ausgewählt werden, in dem heruntergeladene Episoden gespeichert werden sollen."));
+
+        QString destination;
+        while(!QDir(destination).exists() || destination.isEmpty()) {
+            destination = QFileDialog::getExistingDirectory(this, "Select destionation folder", ".",
+                                                                            QFileDialog::ShowDirsOnly
+                                                                            | QFileDialog::DontResolveSymlinks);
+        }
+
         settings->setValue("baseDir", destination);
     }
 
-    settings->setValue("apiUrl",        QUrl("http://launcher.maniactwister.de/api2/"));
-    settings->setValue("updateUrl",     QUrl("http://launcher.maniactwister.de/lastupdate"));
-    settings->setValue("epiDir",        settings->value("baseDir").toString() + "/" + "Episoden");
-    settings->setValue("screenDir",     settings->value("baseDir").toString() + "/" + "Screenshots");
-    settings->setValue("epiJson",       settings->value("baseDir").toString() + "/" + ".episoden.json");
-    settings->setValue("categoryJson",  settings->value("baseDir").toString() + "/" + ".categories.json");
-    settings->setValue("authorJson",    settings->value("baseDir").toString() + "/" + ".authors.json");
-    settings->sync();
+    updateSettings();
 
     //QStringList list;
     downloader = new FileDownloader(QUrl(settings->value("updateUrl").toString()), this);
@@ -75,8 +77,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->directoryContent, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), SLOT(openAdditionalFile(QTreeWidgetItem*)));
 
     noEpiSelected();
-    epiDir = new QDir(settings->value("epiDir").toString());
-    screenDir = new QDir(settings->value("screenDir").toString());
 
     // epiDescription background
     ui->epiDescription->viewport()->setAutoFillBackground(false);
@@ -93,6 +93,39 @@ MainWindow::MainWindow(QWidget *parent) :
     setCurrentTreeWidget();
     ui->tabWidget->tabBar()->tabButton(0, QTabBar::RightSide)->resize(0, 0);
     ui->tabWidget->setTabText(0, tr("Übersicht"));
+
+    // Menu Bar
+//    QMenu *fileMenu = new QMenu(tr("&File"), this);
+//    QAction *settingsAction = fileMenu->addAction(tr("&Settings"));
+//    fileMenu->addSeparator();
+//    QAction *quitAction = fileMenu->addAction(QIcon::fromTheme("application-exit"), tr("&Quit"));
+//    QMenu *helpMenu = new QMenu(tr("&Help"), this);
+//    QAction *aboutAction = helpMenu->addAction(QIcon::fromTheme("help-about"), tr("&About..."));
+    connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(settingsDialog()));
+    connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
+    connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(aboutMMMLauncher()));
+//    menuBar()->addMenu(fileMenu);
+//    menuBar()->addMenu(helpMenu);
+      qDebug() << QIcon::themeSearchPaths();
+
+      QIcon::setThemeName(Desktop::determineIconTheme());
+      ui->actionSettings->setIcon(QIcon::fromTheme("preferences-system"));
+      ui->actionQuit->setIcon(QIcon::fromTheme("application-exit"));
+      ui->actionAbout->setIcon(QIcon::fromTheme("help-about"));
+}
+
+void MainWindow::updateSettings()
+{
+    settings->setValue("apiUrl",        QUrl("http://launcher.maniactwister.de/api2/"));
+    settings->setValue("updateUrl",     QUrl("http://launcher.maniactwister.de/lastupdate"));
+    settings->setValue("epiDir",        settings->value("baseDir").toString() + "/" + "Episoden");
+    settings->setValue("screenDir",     settings->value("baseDir").toString() + "/" + "Screenshots");
+    settings->setValue("epiJson",       settings->value("baseDir").toString() + "/" + ".episoden.json");
+    settings->setValue("categoryJson",  settings->value("baseDir").toString() + "/" + ".categories.json");
+    settings->setValue("authorJson",    settings->value("baseDir").toString() + "/" + ".authors.json");
+    settings->sync();
+    epiDir = new QDir(settings->value("epiDir").toString());
+    screenDir = new QDir(settings->value("screenDir").toString());
 }
 
 /**
@@ -1184,6 +1217,42 @@ void MainWindow::destroyAboutDialog()
     if (m_aboutDialog) {
         m_aboutDialog->deleteLater();
         m_aboutDialog = 0;
+    }
+}
+
+
+/**
+ *
+ * Settings dialog
+ *
+ */
+
+/**
+  * Slot - fired when the settings-button is clicked - show the settings dialog
+  *
+  *  @return void
+  *
+**/
+void MainWindow::settingsDialog()
+{
+    m_settingsDialog = new SettingsDialog(settings->value("baseDir").toString(), this);
+    connect(m_settingsDialog, SIGNAL(finished(int)), this, SLOT(destroySettingsDialog()));
+    m_settingsDialog->show();
+}
+
+/**
+  * Slot - fired when the settings dialog should be closed - close settings dialog
+  *
+  *  @return void
+  *
+**/
+void MainWindow::destroySettingsDialog()
+{
+    if (m_settingsDialog) {
+        settings->setValue("baseDir", m_settingsDialog->getFolder());
+        updateSettings();
+        m_settingsDialog->deleteLater();
+        m_settingsDialog = 0;
     }
 }
 

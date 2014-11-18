@@ -15,7 +15,7 @@ OS_T = "Unknown"
 win32:OS_T = "Windows"
 unix:OS_T = "Unix"
 
-VERSION = "3.0.7-dev"
+VERSION = "3.0.6"
 USERAGENT = MMMLauncher/$$VERSION/$$OS_T
 DEFINES += APPLICATION_VERSION=\"\\\"$$VERSION\\\"\"
 DEFINES += USERAGENT=\"\\\"$$USERAGENT\\\"\"
@@ -36,7 +36,9 @@ SOURCES += main.cpp\
     Parsers/categoryparser.cpp \
     Parsers/epiparser.cpp \
     Parsers/authorparser.cpp \
-    version.cpp
+    version.cpp \
+    settingsdialog.cpp \
+    desktop.cpp
 
 HEADERS  += mainwindow.h \
     filedownloader.h \
@@ -51,10 +53,13 @@ HEADERS  += mainwindow.h \
     Parsers/categoryparser.h \
     Parsers/epiparser.h \
     Parsers/authorparser.h \
-    version.h
+    version.h \
+    settingsdialog.h \
+    desktop.h
 
 FORMS    += mainwindow.ui \
-    newtabdialog.ui
+    newtabdialog.ui \
+    settingsdialog.ui
 
 RESOURCES += \
     mmml.qrc

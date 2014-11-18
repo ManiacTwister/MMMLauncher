@@ -14,6 +14,7 @@
 #include "filedownloader.h"
 #include "epidownloader.h"
 #include "aboutdialog.h"
+#include "settingsdialog.h"
 #include "Parsers/epiparser.h"
 #include "Parsers/categoryparser.h"
 #include "Parsers/authorparser.h"
@@ -37,6 +38,7 @@ public:
     
 private:
     AboutDialog *m_aboutDialog;
+    SettingsDialog *m_settingsDialog;
     NewTabDialog *m_newTabDialog;
     QGraphicsScene *scene;
     Ui::MainWindow *ui;
@@ -108,6 +110,7 @@ private:
     void setCurrentTreeWidget();
     void downloadEpisode(Episode* episode);
     void downloadNext();
+    void updateSettings();
 
 
 
@@ -119,6 +122,8 @@ private slots:
     void checkIfUpdateNeeded();
     void aboutMMMLauncher();
     void destroyAboutDialog();
+    void settingsDialog();
+    void destroySettingsDialog();
     void episodeSelected();
     /*void episodeSelected(QModelIndex row);*/
     void downloadEpisode();
