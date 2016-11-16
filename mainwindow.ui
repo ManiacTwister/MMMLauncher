@@ -103,7 +103,7 @@
       <x>340</x>
       <y>590</y>
       <width>261</width>
-      <height>33</height>
+      <height>34</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
@@ -214,37 +214,6 @@
      <string>Zusätzliche Dateien:</string>
     </property>
    </widget>
-   <widget class="QTableWidget" name="tableWidget">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>590</width>
-      <height>267</height>
-     </rect>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>590</width>
-      <height>267</height>
-     </size>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>590</width>
-      <height>267</height>
-     </size>
-    </property>
-    <property name="showGrid">
-     <bool>false</bool>
-    </property>
-    <attribute name="verticalHeaderVisible">
-     <bool>false</bool>
-    </attribute>
-   </widget>
    <widget class="QPlainTextEdit" name="epiDescription">
     <property name="geometry">
      <rect>
@@ -315,6 +284,18 @@
       <height>301</height>
      </rect>
     </property>
+    <property name="maximumSize">
+     <size>
+      <width>591</width>
+      <height>301</height>
+     </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QTabWidget::pane { border: 0; }</string>
+    </property>
+    <property name="tabShape">
+     <enum>QTabWidget::Rounded</enum>
+    </property>
     <property name="currentIndex">
      <number>0</number>
     </property>
@@ -323,15 +304,15 @@
     </property>
     <widget class="QWidget" name="allEpisodes">
      <attribute name="title">
-      <string>Tab 1</string>
+      <string>Übersi&amp;cht</string>
      </attribute>
      <widget class="QTreeWidget" name="treeWidget">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>587</width>
-        <height>266</height>
+        <width>591</width>
+        <height>269</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -339,6 +320,18 @@
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>591</width>
+        <height>269</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>591</width>
+        <height>269</height>
+       </size>
       </property>
       <property name="editTriggers">
        <set>QAbstractItemView::NoEditTriggers</set>
@@ -416,7 +409,7 @@
      <x>0</x>
      <y>0</y>
      <width>609</width>
-     <height>19</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

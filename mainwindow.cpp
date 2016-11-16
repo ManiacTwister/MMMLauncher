@@ -1185,13 +1185,16 @@ void MainWindow::openNewTab()
 
     QTreeWidget* tabContent = new QTreeWidget();
     tabContent->setHeaderLabels(headerLabels);
-    tabContent->header()->setStretchLastSection(false);
+    tabContent->setFont(QFont("Source Sans Pro"));
+    tabContent->header()->setStretchLastSection(true);
     tabContent->setRootIsDecorated(false);
     tabContent->setItemsExpandable(true);
     tabContent->setIndentation(15);
     tabContent->setExpandsOnDoubleClick(false);
     tabContent->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tabContent->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    tabContent->setMaximumHeight(269);
+    tabContent->setMinimumHeight(269);
     setupTreewidget(tabContent);
 
     QTreeWidgetItem* cat;
