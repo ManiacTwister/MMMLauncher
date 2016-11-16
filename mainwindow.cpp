@@ -306,15 +306,15 @@ void MainWindow::openAdditionalFile(QTreeWidgetItem* item) {
     if(fileInfo->exists()) {
         QString suffix = fileInfo->suffix().toLower();
         if(suffix == "tra") {
-            if(QMessageBox::question(this, tr("Setup starten?"), tr("Die entsprechende Datei ist eine Übersetzung für das Spiel. Möchten Sie das Spielsetup, wenn möglich, jetzt starten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
+            if(QMessageBox::question(this, tr("Setup starten?"), tr("Die entsprechende Datei ist eine Übersetzung für das Spiel. Möchtest du das Spielsetup, wenn möglich, jetzt starten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
                 setupEpisode();
             }
         } else if(/*Info.filfileeName().toLower() == "agssave"*/suffix.toInt()) {
-            if(QMessageBox::question(this, tr("Spiel starten?"), tr("Die entsprechende Datei ist ein Savegame für das Spiel. Möchten Sie das Spiel, wenn möglich, jetzt starten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
+            if(QMessageBox::question(this, tr("Spiel starten?"), tr("Die entsprechende Datei ist ein Savegame für das Spiel. Möchtest du das Spiel, wenn möglich, jetzt starten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
                 startEpisode();
             }
         } else if(suffix == "agr") {
-            QMessageBox::information(this, "Kann Datei nicht öffen", tr("Die entsprechende Datei kann jetzt nicht geöffnet werden. Versuchen Sie, die Datei mit dem Adventure Game Studio zu öffnen!"));
+            QMessageBox::information(this, "Kann Datei nicht öffen", tr("Die entsprechende Datei kann jetzt nicht geöffnet werden. Versuche, die Datei mit dem Adventure Game Studio zu öffnen!"));
         } else {
             QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo->absoluteFilePath()));
         }
@@ -827,7 +827,7 @@ void MainWindow::downloadEpisode()
 **/
 void MainWindow::downloadAll()
 {
-    if(QMessageBox::question(this, tr("Alles laden?"), tr("Sind Sie sich sicher, dass Sie alle Episoden laden möchten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
+    if(QMessageBox::question(this, tr("Alles laden?"), tr("Bist du sich sicher, dass du alle Episoden laden möchten?"), QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes) == QMessageBox::Yes) {
         downloadAllIndex = 0;
         downloadingAll = true;
         downloadNext();
@@ -1129,7 +1129,7 @@ void MainWindow::setupEpisode() {
     QString epiPath = QString(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory() + "/");
     process->setWorkingDirectory(epiPath);
     #ifdef Q_OS_LINUX
-      QMessageBox::information(0, "Information", "Diese Funktion steht unter Linux derzeit nicht zur verfügung.");
+      QMessageBox::information(0, "Information", tr("Diese Funktion steht unter Linux derzeit nicht zur verfügung."));
     #elif defined(Q_OS_WIN)
       process->start(epiPath + "winsetup.exe", parameters);
       qDebug() << process->errorString();
