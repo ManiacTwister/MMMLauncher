@@ -64,7 +64,7 @@ AboutDialog::AboutDialog(QWidget *parent)
         "Crafted by: %5 (%6)<br/>"
         "Thanks to: %7 (%8)<br/>"    
         "<br />"
-        "Support: <a href='irc://irc.s7t.de/#mmm'>irc://irc.s7t.de/#mmm</a><br />"
+        "Support: <a href='irc://nyanch.at/#mmm'>irc://nyanch.at/#mmm</a><br />"
         "<br />"
         "The program is provided AS IS with NO WARRANTY OF ANY KIND, "
         "INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A "
