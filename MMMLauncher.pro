@@ -21,6 +21,7 @@ DEFINES += APPLICATION_VERSION=\"\\\"$$VERSION\\\"\"
 DEFINES += USERAGENT=\"\\\"$$USERAGENT\\\"\"
 
 TRANSLATIONS = languages/mmml_en.ts languages/mmml_de.ts
+
 win32:RC_FILE = MMMLauncher.rc
 
 SOURCES += main.cpp\
@@ -37,7 +38,6 @@ SOURCES += main.cpp\
     Parsers/categoryparser.cpp \
     Parsers/epiparser.cpp \
     Parsers/authorparser.cpp \
-    version.cpp \
     settingsdialog.cpp \
     desktop.cpp
 
@@ -54,9 +54,10 @@ HEADERS  += mainwindow.h \
     Parsers/categoryparser.h \
     Parsers/epiparser.h \
     Parsers/authorparser.h \
-    version.h \
     settingsdialog.h \
-    desktop.h
+    desktop.h \
+    qreplytimeout.h \
+    version.h
 
 FORMS    += mainwindow.ui \
     newtabdialog.ui \
