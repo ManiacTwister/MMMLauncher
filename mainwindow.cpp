@@ -182,6 +182,17 @@ void MainWindow::setCurrentTreeWidget()
         currentTreeWidget = (QTreeWidget*) ui->tabWidget->currentWidget();
     }
 
+    currentTreeWidget->header()->setStretchLastSection(true);
+    currentTreeWidget->header()->setSectionResizeMode(QHeaderView::Fixed);
+
+    // Let's hope there are no episodes with more than 4 translations
+    // calculate size for author and title field (fullsize - scrollbar - languageicons -2(Don't know why we need to this additionally)
+    qint32 remaining = currentTreeWidget->width() - qApp->style()->pixelMetric(QStyle::PM_ScrollBarExtent) - 4 * 18 -2;
+    qint32 author = remaining/3.7;
+    currentTreeWidget->setColumnWidth(0, remaining - author);
+    currentTreeWidget->setColumnWidth(1, author);
+    currentTreeWidget->setColumnWidth(2, 4 * 18);
+
 }
 
 /**
@@ -769,6 +780,7 @@ void MainWindow::addGameWidgetItem(Episode* episode, QTreeWidgetItem* item)
     item->setIcon(0, category->getIcon());
     item->setText(0, episode->getTitle());
     item->setText(1, author);
+    item->treeWidget()->setItemWidget(item, 2, episode->getLanguageLabel());
     item->setData(0,Qt::UserRole, episode->getUid()); // unique ID;
 }
 
