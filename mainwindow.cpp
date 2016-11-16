@@ -440,17 +440,36 @@ void MainWindow::checkIfUpdateNeeded()
         QJsonObject ob = json.object();
         QJsonObject meta = ob["meta"].toObject();
         QDateTime lastupdate = QDateTime::fromString(meta["lastupdate"].toString(), "yyyy-MM-dd hh:mm:ss");
-        Version lastVersion(meta["lastlauncherversion"].toString().toStdString());
-        Version currentVersion(QApplication::applicationVersion().toStdString());
+        Version lastVersion(meta["lastlauncherversion"].toString().toStdString().c_str());
+        Version currentVersion(QApplication::applicationVersion().toStdString().c_str());
 
         if(currentVersion < lastVersion) {
             QMessageBox::information(0, tr("Update verfügbar!"),
-                                     tr("Eine neue MMMLauncher Version ist verfügbar!\nIhre Version: %1  Aktuelle Version: %2")
+                                     tr("Eine neue MMMLauncher Version ist verfügbar!\nInstallierte Version: %1  Aktuelle Version: %2")
                                         .arg(
                                              QString(QApplication::applicationVersion()),
                                              meta["lastlauncherversion"].toString()
                                          )
                                     );
+        }
+
+        if(meta.contains("specialmessage")) {
+            QJsonObject specialmessage =  meta["specialmessage"].toObject();
+            Version forVersion = Version(specialmessage["forversion"].toString().toStdString().c_str());
+
+            bool notify = false;
+            if(specialmessage["operator"].toString() == "<" && currentVersion < forVersion)
+                notify = true;
+            else if(specialmessage["operator"].toString() == "==" && currentVersion == forVersion)
+                notify = true;
+            else if(specialmessage["operator"].toString() == "<=" && currentVersion <= forVersion)
+                notify = true;
+
+
+            if(notify) {
+                QMessageBox::information(0, tr("Wichtige Meldung!"),
+                                         specialmessage["message"].toString());
+            }
         }
 
         if(!updateNeeded) {

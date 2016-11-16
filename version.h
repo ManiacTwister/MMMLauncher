@@ -1,28 +1,59 @@
 #ifndef VERSION_H
 #define VERSION_H
-
-#include <QObject>
+#include <cstdio>
+#include <string>
 #include <iostream>
-#include <sstream>
-#include <vector>
-#include <iterator>
 
-class Version : public QObject
+struct Version
 {
-    Q_OBJECT
-    struct Dig
+    int major, minor, revision;
+
+    Version(const std::string& version)
     {
-        int value;
-        operator int() const {return value;}
-    };
-    friend std::istream& operator>>(std::istream& str, Version::Dig& dig);
+        std::sscanf(version.c_str(), "%d.%d.%d", &major, &minor, &revision);
+        if (major < 0) major = 0;
+        if (minor < 0) minor = 0;
+        if (revision < 0) revision = 0;
+    }
 
-    public:
-        Version(std::string const&);
-        bool operator<(Version const&) const;
+    bool operator < (const Version& other)
+    {
+        if (major < other.major)
+            return true;
+        if (minor < other.minor)
+            return true;
+        if (revision < other.revision)
+            return true;
+        return false;
+    }
 
-    private:
-        std::vector<int> vInfo;
+    bool operator <= (const Version& other)
+    {
+        if (major < other.major)
+            return true;
+        if (minor < other.minor)
+            return true;
+        if (revision <= other.revision)
+            return true;
+        return false;
+    }
+
+    bool operator == (const Version& other)
+    {
+        return major == other.major
+            && minor == other.minor
+            && revision == other.revision;
+    }
+
+    friend std::ostream& operator << (std::ostream& stream, const Version& ver)
+    {
+        stream << ver.major;
+        stream << '.';
+        stream << ver.minor;
+        stream << '.';
+        stream << ver.revision;
+        return stream;
+    }
 };
 
 #endif // VERSION_H
