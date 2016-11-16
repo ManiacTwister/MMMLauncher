@@ -2,7 +2,7 @@
 #include "ui_settingsdialog.h"
 #include <QFileDialog>
 
-SettingsDialog::SettingsDialog(QString currentFolder, QWidget *parent) :
+SettingsDialog::SettingsDialog(QString currentFolder, bool aktionsliste, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDialog)
 {
@@ -10,6 +10,7 @@ SettingsDialog::SettingsDialog(QString currentFolder, QWidget *parent) :
     connect(ui->browseButton , SIGNAL(clicked()), this, SLOT(browse()));
     folder = currentFolder;
     ui->folderInput->setText(folder);
+    ui->checkBox->setChecked(aktionsliste);
 }
 
 void SettingsDialog::browse()
@@ -28,6 +29,11 @@ void SettingsDialog::browse()
 QString SettingsDialog::getFolder()
 {
     return folder;
+}
+
+bool SettingsDialog::getAktionslisteEnabled()
+{
+    return ui->checkBox->isChecked();
 }
 
 SettingsDialog::~SettingsDialog()

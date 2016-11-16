@@ -3,13 +3,14 @@
 
 #include <QString>
 #include <QIcon>
+#include <QLabel>
 #include "category.h"
 
 class Episode
 {
 public:
     Episode();
-    Episode(int id, QString title, QString description, int author, int categoryUid, QString image, QString downloadurl);
+    Episode(int id, QString title, QString description, int author, int categoryUid, QString image, QString downloadurl, int actions, int length, int level, QStringList languages, int edgar);
     void setCategoryUid(int newcategory);
     void setAuthorUid(int newauthor);
     void setTitle(QString newtitle);
@@ -20,6 +21,9 @@ public:
     void setEdgarCount(int newCount);
     void setVotes(int newVotes);
     void setUid(int newId);
+    void setActions(int actions);
+    void setLength(int length);
+    void setLevel(int level);
     int getCategoryUid();
     int getAuthorUid();
     QString getTitle();
@@ -29,10 +33,22 @@ public:
     QString getDownloadUrl();
     QString getScreenshotUrl();
     QString getGameExe();
+    int getActions();
+    QString getActionsString();
+    QString getLengthString();
+    QString getLevelString();
     int getEdgarCount();
     int getVotes();
     int getUid();
     QString getDirectory();
+    QStringList getLanguages();
+    QLabel *getLanguageLabel();
+    void setLanguages(QStringList value);
+
+    int getEdgar();
+    void setEdgar(int edgar);
+    QPixmap getEdgarImage();
+
 private:
     int categoryUid;
     int author;
@@ -41,9 +57,13 @@ private:
     QString downloadurl;
     QString screenshoturl;
     QString gameExe;
-    int edgars;
+    int edgar;
     double votes;
     int uid;
+    int actions;
+    int length;
+    int level;
+    QStringList languages;
 };
 
 #endif // EPISODE_H

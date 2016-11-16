@@ -249,21 +249,21 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>530</y>
+      <y>553</y>
       <width>320</width>
-      <height>143</height>
+      <height>120</height>
      </rect>
     </property>
     <property name="minimumSize">
      <size>
       <width>320</width>
-      <height>139</height>
+      <height>120</height>
      </size>
     </property>
     <property name="maximumSize">
      <size>
       <width>316</width>
-      <height>143</height>
+      <height>120</height>
      </size>
     </property>
     <property name="readOnly">
@@ -370,11 +370,39 @@
       </column>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_2">
-     <attribute name="title">
-      <string>Tab 2</string>
-     </attribute>
-    </widget>
+   </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget_3">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>526</y>
+      <width>321</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item alignment="Qt::AlignLeft">
+      <widget class="QLabel" name="actions">
+       <property name="text">
+        <string>&lt;b&gt;Aktionen:&lt;/b&gt; N/A</string>
+       </property>
+      </widget>
+     </item>
+     <item alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="length">
+       <property name="text">
+        <string>&lt;b&gt;Länge:&lt;/b&gt; N/A</string>
+       </property>
+      </widget>
+     </item>
+     <item alignment="Qt::AlignRight">
+      <widget class="QLabel" name="difficulty">
+       <property name="text">
+        <string>&lt;b&gt;Schwierigkeit:&lt;/b&gt; N/A</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">

@@ -40,6 +40,11 @@ void EpiParser::parse()
             QString screenshotUrl = QString();
             int categoryUid = -1;
             QString downloadUrl = QString();
+            int actions = -1;
+            int length = -1;
+            int level = -1;
+            int edgar = -1;
+            QStringList languageList;
 
             if(!epiObject["ID"].isNull()) {
                 id = (int) epiObject["ID"].toDouble();
@@ -62,6 +67,24 @@ void EpiParser::parse()
             if(!epiObject["Download"].isNull()) {
                 downloadUrl = epiObject["Download"].toString();
             }
+            if(!epiObject["Actions"].isNull()) {
+                actions = epiObject["Actions"].toInt();
+            }
+            if(!epiObject["Length"].isNull()) {
+                length = epiObject["Length"].toInt();
+            }
+            if(!epiObject["Level"].isNull()) {
+                level = epiObject["Level"].toInt();
+            }
+            if(!epiObject["LanguageList"].isNull()) {
+                foreach(QJsonValue language, epiObject["LanguageList"].toArray() ) {
+                   if(language == "de" || language == "") continue;
+                   languageList << language.toString();
+                }
+
+            }
+            if(!epiObject["Edgar"].isNull()) {
+                edgar = epiObject["Edgar"].toInt();
             }
 
             episodes.insert(id, new Episode(
@@ -71,7 +94,12 @@ void EpiParser::parse()
                 authorUid,
                 categoryUid,
                 screenshotUrl,
-                downloadUrl
+                downloadUrl,
+                actions,
+                length,
+                level,
+                languageList,
+                edgar
             ));
        }
     } else {

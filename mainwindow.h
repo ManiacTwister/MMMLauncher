@@ -52,7 +52,7 @@ private:
 
     QTreeWidget *currentTreeWidget;
     EpiParser *epis = new EpiParser();
-    Episode *selectedEpisode;
+    Episode *selectedEpisode = NULL;
 
     CategoryParser *categories = new CategoryParser();
     AuthorParser *authors = new AuthorParser();
@@ -85,6 +85,7 @@ private:
 
     void readingReadyBytes();
     void setNoimage();
+    void unsetAktionsliste();
     void setImage();
     void noEpiSelected();
     void setControlsDownloading();

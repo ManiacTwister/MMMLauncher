@@ -58,6 +58,9 @@ MainWindow::MainWindow(QWidget *parent) :
         settings->setValue("baseDir", destination);
     }
 
+    if(settings->value("aktionsliste").isNull()) {
+        settings->setValue("aktionsliste", true);
+    }
     updateSettings();
 
     //QStringList list;
@@ -202,6 +205,10 @@ void MainWindow::episodeSelected()
     ui->epiDescription->setPlainText(selectedEpisode->getDescription());
     QDir *selectedEpiDir = new QDir(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
 
+    ui->actions->setText(tr("<b>Aktionen:</b>") + " " + selectedEpisode->getActionsString());
+    ui->length->setText(tr("<b>Länge:</b>") + " " + selectedEpisode->getLengthString());
+    ui->difficulty->setText(tr("<b>Schwierigkeit:</b>") + " " + selectedEpisode->getLevelString());
+
     ui->directoryContent->clear();
 
     if(!selectedEpiDir->exists()) {
@@ -318,6 +325,7 @@ void MainWindow::setImage() {
     if(file.exists()) {
         scene = new QGraphicsScene();
         scene->addPixmap(QPixmap(image));
+        scene->addPixmap(selectedEpisode->getEdgarImage());
         ui->epiScreenshoot->setScene(scene);
     } else {
         setNoimage();
@@ -334,7 +342,22 @@ void MainWindow::setImage() {
 void MainWindow::setNoimage() {
     scene = new QGraphicsScene();
     scene->addPixmap(QPixmap(":/images/images/undefined.png"));
+    if(selectedEpisode != NULL) {
+        scene->addPixmap(selectedEpisode->getEdgarImage());
+    }
     ui->epiScreenshoot->setScene(scene);
+}
+
+/**
+  *  Set aktionslisten fields to "N/A"
+  *
+  *  @return void
+  *
+**/
+void MainWindow::unsetAktionsliste() {
+    ui->actions->setText(tr("<b>Aktionen:</b> N/A"));
+    ui->length->setText(tr("<b>Länge:</b> N/A"));
+    ui->difficulty->setText(tr("<b>Schwierigkeit:</b> N/A"));
 }
 
 /**
@@ -345,11 +368,16 @@ void MainWindow::setNoimage() {
 **/
 void MainWindow::noEpiSelected() {
     setNoimage();
+    unsetAktionsliste();
     ui->epiDescription->setPlainText("");
     ui->buttonDownload->setDisabled(true);
     ui->buttonSetup->setDisabled(true);
     ui->buttonStart->setDisabled(true);
     ui->directoryContent->clear();
+
+    ui->actions->setText(tr("<b>Aktionen:</b> N/A"));
+    ui->length->setText(tr("<b>Länge:</b> N/A"));
+    ui->difficulty->setText(tr("<b>Schwierigkeit:</b> N/A"));
     return;
 }
 
@@ -1259,7 +1287,7 @@ void MainWindow::destroyAboutDialog()
 **/
 void MainWindow::settingsDialog()
 {
-    m_settingsDialog = new SettingsDialog(settings->value("baseDir").toString(), this);
+    m_settingsDialog = new SettingsDialog(settings->value("baseDir").toString(), settings->value("aktionsliste").toBool(), this);
     connect(m_settingsDialog, SIGNAL(finished(int)), this, SLOT(destroySettingsDialog()));
     m_settingsDialog->show();
 }
@@ -1274,6 +1302,18 @@ void MainWindow::destroySettingsDialog()
 {
     if (m_settingsDialog) {
         settings->setValue("baseDir", m_settingsDialog->getFolder());
+        settings->setValue("aktionsliste", m_settingsDialog->getAktionslisteEnabled());
+        if(!m_settingsDialog->getAktionslisteEnabled()) {
+            unsetAktionsliste();
+
+            ui->actions->hide();
+            ui->length->hide();
+            ui->difficulty->hide();
+        } else {
+            ui->actions->show();
+            ui->length->show();
+            ui->difficulty->show();
+        }
         updateSettings();
         m_settingsDialog->deleteLater();
         m_settingsDialog = 0;
