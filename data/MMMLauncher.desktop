@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=3.0.3
+Name=MMMLauncher
+GenericName=MMMLauncher
+Comment=Launcher for Maniac Mansion Mania episodes
+Icon=mmmlauncher
+Exec=mmmlauncher
+Terminal=false
+Type=Application
+Categories=Game
