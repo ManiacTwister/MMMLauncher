@@ -20,6 +20,7 @@ USERAGENT = MMMLauncher/$$VERSION/$$OS_T
 DEFINES += APPLICATION_VERSION=\"\\\"$$VERSION\\\"\"
 DEFINES += USERAGENT=\"\\\"$$USERAGENT\\\"\"
 
+TRANSLATIONS = languages/mmml_en.ts languages/mmml_de.ts
 win32:RC_FILE = MMMLauncher.rc
 
 SOURCES += main.cpp\
@@ -62,7 +63,8 @@ FORMS    += mainwindow.ui \
     settingsdialog.ui
 
 RESOURCES += \
-    mmml.qrc
+    mmml.qrc \
+    translations.qrc
 
 binfile.files += mmmlauncher
 binfile.path = /usr/bin/

@@ -1320,6 +1320,101 @@ void MainWindow::destroySettingsDialog()
     }
 }
 
+// we create the menu entries dynamically, dependent on the existing translations.
+void MainWindow::createLanguageMenu(void)
+{
+ QActionGroup* langGroup = new QActionGroup(ui->menuLanguage);
+ langGroup->setExclusive(true);
+
+ connect(langGroup, SIGNAL (triggered(QAction *)), this, SLOT (slotLanguageChanged(QAction *)));
+
+ // format systems language
+ QString defaultLocale = QLocale::system().name(); // e.g. "de_DE"
+ defaultLocale.truncate(defaultLocale.lastIndexOf('_')); // e.g. "de"
+
+ QDir dir(":/languages/");
+ QStringList fileNames = dir.entryList(QStringList("mmml_*.qm"));
+
+ for (int i = 0; i < fileNames.size(); ++i) {
+  // get locale extracted by filename
+  QString locale;
+  locale = fileNames[i];
+  locale.truncate(locale.lastIndexOf('.'));
+  locale.remove(0, locale.indexOf('_') + 1);
+
+ QString lang = QLocale::languageToString(QLocale(locale).language());
+ QIcon ico(QString(":/images/images/"+locale+".png"));
+
+ QAction *action = new QAction(ico, lang, this);
+ action->setCheckable(true);
+ action->setData(locale);
+
+ ui->menuLanguage->addAction(action);
+ langGroup->addAction(action);
+
+ // set default translators and language checked
+ if (defaultLocale == locale)
+ {
+ action->setChecked(true);
+ }
+ }
+}
+
+// Called every time, when a menu entry of the language menu is called
+void MainWindow::slotLanguageChanged(QAction* action)
+{
+ if(0 != action) {
+  // load the language dependant on the action content
+  loadLanguage(action->data().toString());
+  //setWindowIcon(action->icon());
+ }
+}
+
+void switchTranslator(QTranslator& translator, const QString& language)
+{
+ // remove the old translator
+ qApp->removeTranslator(&translator);
+
+ // load the new translator
+ if(translator.load(QString(":/languages/mmml_%1.qm").arg(language)))
+  qApp->installTranslator(&translator);
+}
+
+void MainWindow::loadLanguage(const QString& rLanguage)
+{
+ if(m_currLang != rLanguage) {
+  m_currLang = rLanguage;
+  QLocale locale = QLocale(m_currLang);
+  QLocale::setDefault(locale);
+  QString languageName = QLocale::languageToString(locale.language());
+  switchTranslator(m_translator, rLanguage);
+  //switchTranslator(m_translatorQt, QString("qt_%1.qm").arg(rLanguage));
+ }
+}
+void MainWindow::changeEvent(QEvent* event)
+{
+ if(0 != event) {
+  switch(event->type()) {
+   // this event is send if a translator is loaded
+   case QEvent::LanguageChange:
+    ui->retranslateUi(this);
+    break;
+
+   // this event is send, if the system, language changes
+   case QEvent::LocaleChange:
+   {
+    QString locale = QLocale::system().name();
+    locale.truncate(locale.lastIndexOf('_'));
+    loadLanguage(locale);
+    break;
+   }
+   default: {
+    break;
+   }
+  }
+ }
+ QMainWindow::changeEvent(event);
+}
 /**
  *
  * Restart / Close

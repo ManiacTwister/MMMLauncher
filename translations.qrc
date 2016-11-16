@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>languages/mmml_en.qm</file>
+        <file>languages/mmml_de.qm</file>
+    </qresource>
+</RCC>
