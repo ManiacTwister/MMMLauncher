@@ -1,5 +1,6 @@
 #include "filedownloader.h"
 #include <QApplication>
+#include "qreplytimeout.h"
 
 FileDownloader::FileDownloader(QUrl url, QObject *parent) :
     QObject(parent)
@@ -9,7 +10,10 @@ FileDownloader::FileDownloader(QUrl url, QObject *parent) :
 
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", USERAGENT);
-    m_WebCtrl.get(request);
+    QNetworkReply* reply = m_WebCtrl.get(request);
+
+
+    new QReplyTimeout(reply, 10000);
 }
 
 FileDownloader::~FileDownloader()

@@ -12,16 +12,21 @@ EpiDownloader::EpiDownloader(QString dlurl, QObject *parent):QNetworkAccessManag
     connect(this, SIGNAL(finished(QNetworkReply*)), this, SLOT(fin(QNetworkReply*)));
 
     QNetworkRequest req(url);
+    qDebug() << url;
     req.setRawHeader("User-Agent", USERAGENT);
+    req.setRawHeader("Accept-Encoding","identity");
+    filename = dlurl;
     mCurrentReply = this->get(req);
     connect(mCurrentReply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(dlProgress(qint64,qint64)));
+    connect(mCurrentReply, SIGNAL(readyRead()), this, SLOT(readingReadyBytes()));
     downloadTime.start();
 }
 
 void EpiDownloader::fin(QNetworkReply * pReply)
 {
+
     if(pReply->error() != QNetworkReply::NoError)
-        qDebug() << pReply->errorString();
+        qDebug() << "Download Error: " <<pReply->error();
 
     if(pReply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 307 || pReply->rawHeaderList().contains("Location"))
     {
