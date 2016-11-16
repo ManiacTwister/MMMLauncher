@@ -253,7 +253,7 @@ void MainWindow::episodeSelected()
 QString MainWindow::getFileIconName(QFileInfo fileInfo) {
     QString suffix = fileInfo.suffix().toLower();
 
-    if(suffix == "txt") {
+    if(suffix == "txt" && fileInfo.fileName().toLower() != "extractoutput.txt") {
         return ":/icons/images/01.png";
     }
     if(suffix == "jpg" || suffix == "png" || suffix == "bmp" ) {
