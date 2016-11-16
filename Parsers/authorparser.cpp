@@ -26,15 +26,15 @@ void AuthorParser::parse()
     {
 
         QJsonObject ob = json.object();
-        QJsonArray authorsj = ob["authors"].toArray();
+        QJsonArray authorsj = ob["objects"].toArray();
         //authors.reserve(authorsj.count());
         foreach (const QJsonValue &author, authorsj) {
             QJsonObject authorObject = author.toObject();
-            int authorUid = (int) authorObject["id"].toDouble();
-            authors.insert(authorUid, new Author(authorUid, authorObject["name"].toString(), authorObject["games"].toString().toInt()));
+            int authorUid = (int) authorObject["ID"].toDouble();
+            authors.insert(authorUid, new Author(authorUid, authorObject["Name"].toString(), authorObject["Games"].toArray().count()));
        }
     } else {
-        qWarning() << parseError.errorString();
+        qWarning() << "Authorparser: " << parseError.errorString();
     }
 
     parsed = true;

@@ -13,7 +13,7 @@ Category::Category(int uid, QString title, QString icon)
     setTitle(title);
     setIcon(icon);
 }
-Category::Category(int uid, int parentUid, QString title, QString icon)
+Category::Category(int uid, int parentUid, QString title, QIcon icon)
 {
     setUid(uid);
     setParentUid(parentUid);
@@ -31,3 +31,4 @@ void Category::setParentUid(int newParentId) { parentUid = newParentId; }
 void Category::setTitle(QString newTitle) { title = newTitle; }
 
 void Category::setIcon(QString name) { icon = QIcon(":/images/images/"+name+".png"); }
+void Category::setIcon(QIcon name) { icon = name; }

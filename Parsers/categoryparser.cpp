@@ -22,34 +22,40 @@ void CategoryParser::parse()
     QJsonDocument json = QJsonDocument::fromJson(data, &parseError);
 
 
+    // New api doesn't know about icons
+    categoryIcons["Episoden"] = "chuck";
+    categoryIcons["Specials"] = "redchuck";
+    categoryIcons["Fan Adventures"] = "greenchuck";
+    categoryIcons["Trailer & Demos"] = "bluechuck";
+    categoryIcons["Underground"] = "lilachuck";
+
     if(parseError.error == QJsonParseError::NoError)
     {
 
         QJsonObject ob = json.object();
-        QJsonArray categoriesj = ob["categorytree"].toArray();
+        QJsonArray categoriesj = ob["objects"].toArray();
         //categories.reserve(categoriesj.count());
         foreach (const QJsonValue &category, categoriesj) {
 
             QJsonObject categoryObject = category.toObject();
-            int parentUid = (int) categoryObject["id"].toDouble();
-            QString parentIcon = categoryObject["icon"].toString();
+            int Uid = (int) categoryObject["ID"].toDouble();
+            QString Icon = categoryIcons[categoryObject["Title"].toString()];
+            QString Title = categoryObject["Title"].toString();
 
-            categories.insert(parentUid, new Category(parentUid, categoryObject["title"].toString(), parentIcon));
-            if(!categoryObject["categories"].isNull()) {
-                foreach (const QJsonValue &subCategory, categoryObject["categories"].toArray()) {
-                    QJsonObject subCategoryObject = subCategory.toObject();
-                    int subCategoryUid = (int) subCategoryObject["id"].toDouble();
-                    categories.insert(subCategoryUid, new Category(
-                                                         subCategoryUid,
+            if(!categoryObject["ParentID"].isNull()) {
+                int parentUid = (int) categoryObject["ParentID"].toDouble();
+                    categories.insert(Uid, new Category(
+                                                         Uid,
                                                          parentUid,
-                                                         subCategoryObject["title"].toString(),
-                                                         parentIcon
+                                                         Title,
+                                                         categories[parentUid]->getIcon()
                                                      ));
-                }
+            } else {
+                categories.insert(Uid, new Category(Uid, Title, Icon));
             }
        }
     } else {
-        qWarning() << parseError.errorString();
+        qWarning() << "Categoryparser: " << parseError.errorString();
     }
 
     parsed = true;

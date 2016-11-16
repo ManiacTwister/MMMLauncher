@@ -13,6 +13,7 @@ public:
     CategoryParser();
     explicit CategoryParser(QByteArray data, QObject *parent = 0);
     QMap <int, Category*> categories;
+    QMap <QString, QString> categoryIcons;
     void parse();
     bool parsed = false;
 signals:

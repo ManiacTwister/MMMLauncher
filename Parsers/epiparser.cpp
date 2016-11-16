@@ -28,7 +28,7 @@ void EpiParser::parse()
     {
 
         QJsonObject ob = json.object();
-        QJsonArray epis = ob["gameinfos"].toArray();
+        QJsonArray epis = ob["objects"].toArray();
         //episodes.reserve(epis.count());
 
         foreach (const QJsonValue &epi, epis) {
@@ -41,26 +41,27 @@ void EpiParser::parse()
             int categoryUid = -1;
             QString downloadUrl = QString();
 
-            if(!epiObject["id"].isNull()) {
-                id = (int) epiObject["id"].toDouble();
+            if(!epiObject["ID"].isNull()) {
+                id = (int) epiObject["ID"].toDouble();
             }
-            if(!epiObject["title"].isNull()) {
-                title = epiObject["title"].toString();
+            if(!epiObject["Title"].isNull()) {
+                title = epiObject["Title"].toString();
             }
-            if(!epiObject["authorid"].isNull()) {
-                authorUid = (int) epiObject["authorid"].toDouble();
+            if(!epiObject["Author_id"].isNull()) {
+                authorUid = (int) epiObject["Author_id"].toDouble();
             }
-            if(!epiObject["desc"].isNull()) {
-                description = epiObject["desc"].toString();
+            if(!epiObject["Description"].isNull()) {
+                description = epiObject["Description"].toString();
             }
-            if(!epiObject["categoryid"].isNull()) {
-                categoryUid = (int) epiObject["categoryid"].toDouble();
+            if(!epiObject["Category_id"].isNull()) {
+                categoryUid = (int) epiObject["Category_id"].toDouble();
             }
-            if(!epiObject["screenshot"].isNull()) {
-                screenshotUrl = epiObject["screenshot"].toString();
+            if(!epiObject["Screenshot"].isNull()) {
+                screenshotUrl = epiObject["Screenshot"].toString();
             }
-            if(!epiObject["download"].isNull()) {
-                downloadUrl = epiObject["download"].toString();
+            if(!epiObject["Download"].isNull()) {
+                downloadUrl = epiObject["Download"].toString();
+            }
             }
 
             episodes.insert(id, new Episode(
@@ -74,7 +75,7 @@ void EpiParser::parse()
             ));
        }
     } else {
-        qWarning() << parseError.errorString();
+        qWarning() << "Epiparser: " << parseError.errorString();
     }
 
     parsed = true;

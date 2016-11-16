@@ -40,7 +40,8 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_aboutDialog(0),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    networkManager(this)
 {
     settings = new QSettings(/*settings->value("baseDir").toString() + "/.config.ini", */QSettings::IniFormat, QSettings::UserScope, "MMMLauncher");
 
@@ -80,43 +81,47 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // epiDescription background
     ui->epiDescription->viewport()->setAutoFillBackground(false);
+
+    // New tab
     QToolButton *newTabButton = new QToolButton(this);
     ui->tabWidget->setCornerWidget(newTabButton);
     newTabButton->setCursor(Qt::ArrowCursor);
     newTabButton->setAutoRaise(true);
     newTabButton->setIcon(QIcon(":/icons/images/plus.png"));
     connect(newTabButton, SIGNAL(clicked()), this, SLOT(newTabButton()));
-    newTabButton->setToolTip(tr("Add page"));
+    newTabButton->setToolTip(tr("Seite hinzufügen"));
 
-    ui->tabWidget->removeTab(1);
     setupTreewidget(ui->treeWidget);
     setCurrentTreeWidget();
-    ui->tabWidget->tabBar()->tabButton(0, QTabBar::RightSide)->resize(0, 0);
+
+    // Remove close button from frist tab and resize it (width only)
+    int tabheight = ui->tabWidget->tabBar()->tabButton(0, QTabBar::RightSide)->geometry().height();
+    ui->tabWidget->tabBar()
+            ->tabButton(0, QTabBar::RightSide)
+            ->resize(0, tabheight);
     ui->tabWidget->setTabText(0, tr("Übersicht"));
 
-    // Menu Bar
-//    QMenu *fileMenu = new QMenu(tr("&File"), this);
-//    QAction *settingsAction = fileMenu->addAction(tr("&Settings"));
-//    fileMenu->addSeparator();
-//    QAction *quitAction = fileMenu->addAction(QIcon::fromTheme("application-exit"), tr("&Quit"));
-//    QMenu *helpMenu = new QMenu(tr("&Help"), this);
-//    QAction *aboutAction = helpMenu->addAction(QIcon::fromTheme("help-about"), tr("&About..."));
     connect(ui->actionSettings, SIGNAL(triggered()), this, SLOT(settingsDialog()));
     connect(ui->actionQuit, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(aboutMMMLauncher()));
-//    menuBar()->addMenu(fileMenu);
-//    menuBar()->addMenu(helpMenu);
-      qDebug() << QIcon::themeSearchPaths();
 
-      QIcon::setThemeName(Desktop::determineIconTheme());
-      ui->actionSettings->setIcon(QIcon::fromTheme("preferences-system"));
-      ui->actionQuit->setIcon(QIcon::fromTheme("application-exit"));
-      ui->actionAbout->setIcon(QIcon::fromTheme("help-about"));
+    createLanguageMenu();
+
+    QIcon::setThemeName(Desktop::determineIconTheme());
+    ui->actionSettings->setIcon(QIcon::fromTheme("preferences-system"));
+    ui->actionQuit->setIcon(QIcon::fromTheme("application-exit"));
+    ui->actionAbout->setIcon(QIcon::fromTheme("help-about"));
+
+    if(!settings->value("aktionsliste").toBool()) {
+        ui->actions->hide();
+        ui->length->hide();
+        ui->difficulty->hide();
+    }
 }
 
 void MainWindow::updateSettings()
 {
-    settings->setValue("apiUrl",        QUrl("http://launcher.maniactwister.de/api2/"));
+    settings->setValue("apiUrl",        QUrl("http://api.launcher.maniactwister.de/v3"));
     settings->setValue("updateUrl",     QUrl("http://launcher.maniactwister.de/lastupdate"));
     settings->setValue("epiDir",        settings->value("baseDir").toString() + "/" + "Episoden");
     settings->setValue("screenDir",     settings->value("baseDir").toString() + "/" + "Screenshots");
@@ -511,7 +516,7 @@ void MainWindow::initUpdate()
 void MainWindow::downloadCategories() {
     categoriesUpdate = true;
     qDebug() << "downloading categories";
-    categoryDownloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/getCategoryTree.json"), this);
+    categoryDownloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/category"), this);
     connect(categoryDownloader, SIGNAL(downloaded()), SLOT(updateCategories()));
 }
 
@@ -524,7 +529,7 @@ void MainWindow::downloadCategories() {
 void MainWindow::downloadAuthors() {
     authorsUpdate = true;
     qDebug() << "downloading authors";
-    authorDownloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/getAuthors.json"), this);
+    authorDownloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/author"), this);
     connect(authorDownloader, SIGNAL(downloaded()), SLOT(updateAuthors()));
 }
 
@@ -537,13 +542,13 @@ void MainWindow::downloadAuthors() {
 void MainWindow::downloadGames() {
     episUpdate = true;
     qDebug() << "downloading games";
-    downloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/getGames.json"), this);
+    downloader = new FileDownloader(QUrl(settings->value("apiUrl").toString() + "/game"), this);
     connect(downloader, SIGNAL(downloaded()), SLOT(updateGames()));
 }
 
 /**
   *  Cache and update categories
-  *
+  *apiUrl
   *  @return void
   *
 **/
@@ -648,7 +653,7 @@ void MainWindow::updateGames() {
 **/
 void MainWindow::updateGames(QByteArray data)
 {
-    qDebug() << "called";
+    qDebug() << "updateGames";
     epis = new EpiParser(data);
     epis->parse();
 

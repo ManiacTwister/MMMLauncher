@@ -7,6 +7,7 @@
 #include <QFile>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#include <QNetworkConfigurationManager>
 #include <QTreeWidgetItem>
 #include <QFileInfo>
 #include <QSettings>
@@ -111,6 +112,7 @@ private:
     void downloadEpisode(Episode* episode);
     void downloadNext();
     void updateSettings();
+    QNetworkConfigurationManager networkManager;
 
 
 

@@ -14,7 +14,7 @@ private:
 public:
     Category();
     Category(int uid, QString title, QString icon);
-    Category(int uid, int parentUid, QString title, QString icon);
+    Category(int uid, int parentUid, QString title, QIcon icon);
 
     int getUid();
     int getParentUid();
@@ -25,6 +25,7 @@ public:
     void setParentUid(int newParentId);
     void setTitle(QString newTitle);
     void setIcon(QString name);
+    void setIcon(QIcon name);
 };
 
 #endif // CATEGORY_H
