@@ -1166,7 +1166,7 @@ void MainWindow::newTabButton()
 void MainWindow::openNewTab()
 {
     QStringList headerLabels;
-    headerLabels<< tr("Title") << tr("Author");
+    headerLabels<< tr("Titel") << tr("Autor") << "";
 
     QTreeWidget* tabContent = new QTreeWidget();
     tabContent->setHeaderLabels(headerLabels);
