@@ -278,11 +278,17 @@ QString MainWindow::getFileIconName(QFileInfo fileInfo) {
         if(fileInfo.fileName().toLower() == "english.tra") {
             return ":/icons/images/08.png";
         }
-        if(fileInfo.fileName().toLower() == "french.tra") {
+        if(fileInfo.fileName().toLower() == "french.tra" || fileInfo.fileName().toLower() == "français.tra") {
             return ":/icons/images/09.png";
         }
         if(fileInfo.fileName().toLower() == "spanish.tra") {
             return ":/icons/images/10.png";
+        }
+        if(fileInfo.fileName().toLower() == "italian.tra" || fileInfo.fileName().toLower() == "italiano.tra") {
+            return ":/icons/images/13.png";
+        }
+        if(fileInfo.fileName().toLower() == "russian.tra") {
+            return ":/icons/images/14.png";
         }
     }
     if(/*Info.filfileeName().toLower() == "agssave"*/suffix.toInt()) {
