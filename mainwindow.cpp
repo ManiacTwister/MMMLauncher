@@ -1,34 +1,35 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "filedownloader.h"
-#include "epidownloader.h"
 #include "aboutdialog.h"
-#include "Models/episode.h"
-#include "Models/category.h"
+#include "desktop.h"
+#include "epidownloader.h"
+#include "filedownloader.h"
+#include "mainwindow.h"
 #include "Models/author.h"
+#include "Models/category.h"
+#include "Models/episode.h"
+#include "newtabdialog.h"
 #include "qextract.h"
+#include "ui_mainwindow.h"
 #include "version.h"
+
+#include <QDebug>
+#include <QDesktopServices>
+#include <QDialogButtonBox>
+#include <QDir>
+#include <QFile>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFont>
+#include <QGraphicsScene>
+#include <QIODevice>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
-#include <QDebug>
+#include <QMessageBox>
+#include <QModelIndex>
+#include <QSettings>
 #include <QString>
 #include <QTableWidgetItem>
-#include <QMessageBox>
-#include <QGraphicsScene>
-#include <QModelIndex>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QSettings>
 #include <QToolButton>
-#include <QFont>
-#include "newtabdialog.h"
-#include <QIODevice>
-#include <QDesktopServices>
-#include <QFileDialog>
-#include <QDialogButtonBox>
-#include "desktop.h"
 
 /**
   *  Create mainwindow
@@ -51,8 +52,8 @@ MainWindow::MainWindow(QWidget *parent) :
         QString destination;
         while(!QDir(destination).exists() || destination.isEmpty()) {
             destination = QFileDialog::getExistingDirectory(this, "Select destionation folder", ".",
-                                                                            QFileDialog::ShowDirsOnly
-                                                                            | QFileDialog::DontResolveSymlinks);
+                                                            QFileDialog::ShowDirsOnly
+                                                            | QFileDialog::DontResolveSymlinks);
         }
 
         settings->setValue("baseDir", destination);
@@ -1121,9 +1122,11 @@ void MainWindow::startEpisode() {
     QStringList parameters;
     QProcess *process = new QProcess();
     process->setWorkingDirectory(epiDir->absolutePath() + "/" + selectedEpisode->getDirectory());
+    qDebug() << selectedEpisode->getGameExe();
     #ifdef Q_OS_LINUX
         parameters << "-windowed";
         process->start("ags", parameters);
+        qDebug() << epiDir->absolutePath() + "/" + selectedEpisode->getDirectory() << " " << parameters;
     #elif defined(Q_OS_WIN)
         process->start(selectedEpisode->getGameExe(), parameters);
     #endif
